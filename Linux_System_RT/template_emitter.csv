@@ -1,0 +1,4 @@
+Time (Sec),Virtual Channel (Stream),Word Type (PDW / Control),"Type:       (ARB, UNMOD, LCHIRP, TCHIRP, BARKER)",Freq Offset (Hz),Level Offset (dB),Phase Offset (degrrees),Arb Seg Num  /  T On  / Pulse Width (usec),T Rise (nsec),T Fall  (nsec),"Edge Shape (LIN,COS",Repetitions, Bandwidth (+/-  or Total? ? Chip Width,Barker Code,Marker 1,Marker 2,Marker 3,Path,CMD,Freq,Level
+1,1,PDW,UNMOD,0,0,0,20,5,5,LIN,1,0,5,1,0,0,NA,NA,NA,NA
+1.00004,1,PDW,LCHIRP,0,0,0,20,5,5,LIN,1,50,5,0,0,0,NA,NA,NA,NA
+1.00009,1,PDW,BARKER,0,0,0,30,5,5,LIN,1,0,2,0,0,0,NA,NA,NA,NA
