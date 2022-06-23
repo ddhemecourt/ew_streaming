@@ -11,7 +11,7 @@ void process_pdw_file(char *filename, struct emitter_s *em_arr, int *num_em)
     FILE* fp = fopen(filename, "r");
     int i;
     if (!fp)
-        printf("Can't open file\n");
+        printf("Can't open emitter file named: %s\n",filename);
  
     else {
         // Here we have taken size of
@@ -61,7 +61,6 @@ void process_pdw_file(char *filename, struct emitter_s *em_arr, int *num_em)
 
 		if (column == 3) {
 			em_arr[i].offset = atof(value);
-			printf("VAL: %s %f %f\n", value, atof(value), em_arr[i].offset);
 		}
 
 		if(column == 4){
@@ -129,11 +128,11 @@ void process_input_file(char *filename, struct emitter_ptr_s *em_arr, int *num_e
     FILE* fp = fopen(filename, "r");
     int i;
     if (!fp)
-        printf("Can't open file\n");
+        printf("Can't open file named: %s\n", filename);
  
     else {
         // Here we have taken size of
-        // array 1024 you can modify it
+        // array 4096 you can modify it
         char buffer[4096];
  
         int row = 0;
@@ -141,7 +140,7 @@ void process_input_file(char *filename, struct emitter_ptr_s *em_arr, int *num_e
 	int BB_col = 0;
  
         while (fgets(buffer,
-                     1024, fp)) {
+                     4096, fp)) {
             column = 0;
             row++;
  	    i = row-2;
@@ -154,7 +153,10 @@ void process_input_file(char *filename, struct emitter_ptr_s *em_arr, int *num_e
             // Splitting the data
             char* value = strtok(buffer, ", ");
  
-            while (value) {
+	    em_arr[i].basebands = malloc(sizeof(int)*32);
+            BB_col=0;
+
+	    while (value) {
                 // Column 1
                 if (column == 0) {
                     em_arr[i].timestep = atoi(value);
@@ -165,64 +167,63 @@ void process_input_file(char *filename, struct emitter_ptr_s *em_arr, int *num_e
                 if (column == 1) {
                     em_arr[i].type = malloc(sizeof(char)*30);
                     strcpy(em_arr[i].type,value);
-		    printf("em_arr[i].type: %s\n", em_arr[i].type);
                 }
                 
 		// Column 3
                 if (column == 2) {
-		    printf("EM1VAL = %s\n", em_arr[0].filename);
-		    printf("VAL: %s I = %d\n", value, i);
                     em_arr[i].filename= malloc(sizeof(char)*30);
                     strcpy(em_arr[i].filename, value);
-		    printf("em_arr[i].filename: %s\n", em_arr[i].filename);
-		    printf("POST EM1VAL = %s\n", em_arr[0].filename);
                 }
  
-                // Column 4 
                 if (column == 3) {
-			BB_col = 0;
-			em_arr[i].basebands = malloc(sizeof(int)*32);
-                	char *BBs = strtok(value, "-");
-			while(BBs){
-				em_arr[i].basebands[BB_col] = atoi(BBs);
-                		BBs = strtok(NULL, "-");
-				BB_col++;
+			if(!strcmp("TCDW",em_arr[i].type)){	
+                    		em_arr[i].CMD= malloc(sizeof(char)*10);
+                    		strcpy(em_arr[i].CMD, value);
 			}
-			em_arr[i].BB_num = BB_col+1;
-		    printf("em_arr[i].BB_num: %d\n", em_arr[i].BB_num);
-
+                }
+                if (column == 4) {
+			if(!strcmp("TCDW",em_arr[i].type)){	
+                    		em_arr[i].PATH= atoi(value);
+			}
+                }
+                if (column == 5) {
+			if(!strcmp("TCDW",em_arr[i].type)){	
+                    		em_arr[i].FVAL = atoi(value);
+			}
+                }
+                if (column == 6) {
+			if(!strcmp("TCDW",em_arr[i].type)){	
+                    		em_arr[i].LVAL = atoi(value);
+			}
+                }
+                // Column 4 
+                if (column > 6) {
+			em_arr[i].basebands[BB_col] = atoi(value);
+			BB_col++;
 		}
  
                 value = strtok(NULL, ", ");
                 column++;
             }
-			printf("LOOP   i = %d  %d  %s  %s  %d\n", i,em_arr[i].timestep, em_arr[i].type,em_arr[i].filename, em_arr[i].BB_num);
  
         }
 
-			i = 0;
-			printf("LOOP2   i = %d  %d  %s  %s  %d\n", i,em_arr[i].timestep, em_arr[i].type,em_arr[i].filename, em_arr[i].BB_num);
-			i = 1;
-			printf("LOOP2   i = %d  %d  %s  %s  %d\n", i,em_arr[i].timestep, em_arr[i].type,em_arr[i].filename, em_arr[i].BB_num);
-	//*num_em_ptrs = row-1;
-	*num_em_ptrs = 2;
+	*num_em_ptrs = row-1;
+	//*num_em_ptrs = 4;
  
-		for(int i = 0; i<row-1; i++){
-			printf("i = %d  %d  %s  %d\n", i,em_arr[i].timestep, em_arr[i].filename, em_arr[i].BB_num);
-		}
         // Close the file
         fclose(fp);
     }
 }
-int main(){
-
-	struct emitter_ptr_s *em_arr = malloc(sizeof(struct emitter_ptr_s)*100);
-	int num_em;
-	process_input_file("template_schedule.csv", em_arr, &num_em);
-	printf("num em : %d\n", num_em);
-	for(int i = 0; i<num_em; i++){
-		printf("i = %d  %d  %s  %d\n", i,em_arr[i].timestep, em_arr[i].filename, em_arr[i].BB_num);
-	}
-	return 0;
-
-}
+//int main(){
+//
+//	struct emitter_ptr_s *em_arr = malloc(sizeof(struct emitter_ptr_s)*100);
+//	int num_em;
+//	process_input_file("template_schedule.csv", em_arr, &num_em);
+//	printf("num em : %d\n", num_em);
+//	for(int i = 0; i<num_em; i++){
+//		printf("i = %d  %d  %s  %d\n", i,em_arr[i].timestep, em_arr[i].filename, em_arr[i].BB_num);
+//	}
+//	return 0;
+//
+//}

@@ -122,10 +122,18 @@ void *simple_cyclic_task(int sock)
         //send_tcdw(sock,tcdw_word);
         //send_pdw(sock,pdw_word_1,11000);
 
-	struct emitter_s *em_arr = malloc(sizeof(struct emitter_s)*100);
-	int num_em;
-	process_pdw_file("input0.csv", em_arr, &num_em);
-	
+//	struct emitter_s *em_arr = malloc(sizeof(struct emitter_s)*100);
+//	int num_em;
+//	process_pdw_file("input0.csv", em_arr, &num_em);
+
+
+
+	struct emitter_ptr_s *em_ptr_arr = malloc(sizeof(struct emitter_ptr_s)*100);
+	int num_em_ptrs;
+	process_input_file("template_schedule.csv", em_ptr_arr, &num_em_ptrs);
+	int em_ptr_i = 0;
+
+	printf("num-em_ptrS: %d\n",num_em_ptrs);
 	//printf("num em : %d\n", num_em);
 	//for(int i = 0; i<num_em; i++){
 	//	printf("%d %d %d %f %ld\n",em_arr[i].MOP,em_arr[i].PRI,em_arr[i].PW,em_arr[i].offset, em_arr[i].FREQ_OFFSET);
@@ -135,12 +143,47 @@ void *simple_cyclic_task(int sock)
 	//em_arr[1] = (struct emitter_s){4, 1, 15,0,5,0};
 	//em_arr[2] = (struct emitter_s){0, 3, 9,0,10,0};
 	double sec = 1000000;
-	
+
+	int num_em;
 	int num_pdws_out;
 	struct pdw_s *pdws_out;
 	char *pdw_words;
+	struct emitter_s *em_arr = malloc(sizeof(struct emitter_s)*100);
+	int last_t = em_ptr_arr[num_em_ptrs-1].timestep;
 	periodic_task_init(&pinfo);
 	while (1) {
+
+		if(em_ptr_arr[em_ptr_i].timestep == TIME && strcmp(em_ptr_arr[em_ptr_i].type,"TCDW")){
+//			printf("GOT EMITTER\n");	
+			free(em_arr);
+			em_arr = malloc(sizeof(struct emitter_s)*100);
+			process_pdw_file(em_ptr_arr[em_ptr_i].filename, em_arr, &num_em);
+			em_ptr_arr[em_ptr_i].timestep = em_ptr_arr[em_ptr_i].timestep + last_t + 10000;
+			em_ptr_i++;
+
+		}
+		else if(em_ptr_arr[em_ptr_i].timestep == TIME && !strcmp(em_ptr_arr[em_ptr_i].type,"TCDW")){	
+//			printf("GOT TCDW\n %d\n", em_ptr_i);	
+			
+			struct tcdw_s tcdw = {TIME,em_ptr_arr[em_ptr_i].PATH, em_ptr_arr[em_ptr_i].CMD, em_ptr_arr[em_ptr_i].FVAL, em_ptr_arr[em_ptr_i].LVAL};	
+			char *tcdw_word = malloc(sizeof(char *)*17);
+			tcdw_constructor(tcdw_word,tcdw);
+			send_tcdw(sock,tcdw_word);
+			em_ptr_arr[em_ptr_i].timestep = em_ptr_arr[em_ptr_i].timestep + last_t + 10000;
+			for(int x = 0; x < 10; x++){
+				wait_rest_of_period(&pinfo);
+				TIME = TIME+1000;
+			}
+			em_ptr_i++;
+			continue;
+		}
+
+		if(em_ptr_i == num_em_ptrs){
+			em_ptr_i = 0;
+		}
+
+		
+
 		pdws_out = emitter_to_pdws(em_arr, num_em,1000, &num_pdws_out, TIME);
 		pdw_words = malloc(sizeof(char *)*48*num_pdws_out);
 		int i = 0;	

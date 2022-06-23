@@ -12,6 +12,12 @@ struct emitter_ptr_s {
 	char *filename;
 	int *basebands;
 	int BB_num;
+	
+	//TCDW info
+	bool PATH; //false = Path A, true = Path B
+	char *CMD; //0 = freq, 1 = amp, 2 = freq and amp, 3 = rearm 
+	unsigned long FVAL : 40;
+	float LVAL;
 
 };
 

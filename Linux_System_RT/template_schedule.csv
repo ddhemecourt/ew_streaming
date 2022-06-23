@@ -1,3 +1,5 @@
-Timestep (ms),Type (Em/TCDW),Emitter Filename,Basebands
-0,Emitter,xxx,0-1
-10,Emitter,yyy,0-1-2-3
+Timestep (ms),Type (Em/TCDW),Emitter Filename,TCDW_CMD,TCDW_PATH (0-A or 1-B),TCDW_FREQ,TCDW_AMP,Baseband 1,Baseband 2
+0,TCDW,NA,freq,0,800000000,0,,
+10000,Emitter,input0.csv,NA,NA,NA,NA,,
+20000,TCDW,NA,freq,0,1000000000,0,,
+30000,Emitter,input1.csv,NA,NA,NA,NA,,
