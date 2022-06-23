@@ -6,14 +6,14 @@
 
 struct pdw_s {
 
-	unsigned long TOA : 52;
+	uint64_t TOA : 52;
 	unsigned int MOD_TYPE : 4;
 	bool M3;
 	bool M2;
 	bool M1;
 	int FREQ_OFFSET;
-	uint16_t LEVEL_OFFSET;
-	uint16_t PHASE_OFFSET;
+	float LEVEL_OFFSET;
+	float PHASE_OFFSET;
 	bool EDGE_TYPE;
 	unsigned int SEGMENT_IDX : 24;
 	unsigned long TON;

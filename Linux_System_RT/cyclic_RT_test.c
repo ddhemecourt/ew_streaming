@@ -40,7 +40,7 @@ static void inc_period(struct period_info *pinfo)
 static void periodic_task_init(struct period_info *pinfo)
 {
         /* for simplicity, hardcoding a 1ms period */
-        pinfo->period_ns = 1000000;
+        pinfo->period_ns = 1000000000;
  
         clock_gettime(CLOCK_MONOTONIC, &(pinfo->next_period));
 }
@@ -75,25 +75,26 @@ void *simple_cyclic_task(int sock)
 
 	struct adw_s adw0 = {true, true, true, false, false, false, false, 0, 32768, 0, 0, 28800, 0};	
 	char *adw_word_0 = malloc(sizeof(char *)*33);
-	adw_constructor(adw_word_0,adw0);
+//	adw_constructor(adw_word_0,adw0);
 
 
 	struct adw_s adw1 = {true, true, true, false, false, false, false, 0, 32768, 0, 1, 28800, 0};	
 	char *adw_word_1 = malloc(sizeof(char *)*33);
-	adw_constructor(adw_word_1,adw1);
+//	adw_constructor(adw_word_1,adw1);
 
 
 	periodic_task_init(&pinfo);
  
         while (1) {
-		if(val == 0){
-                	do_rt_task(sock,adw_word_0);
-		}
-		else{
+		printf("RT TEST\n");
+		//if(val == 0){
+                //	do_rt_task(sock,adw_word_0);
+		//}
+		//else{
 
-                	do_rt_task(sock,adw_word_1);
-		}
-		val ^= (0x01);
+                //	do_rt_task(sock,adw_word_1);
+		//}
+		//val ^= (0x01);
                 wait_rest_of_period(&pinfo);
         }
  

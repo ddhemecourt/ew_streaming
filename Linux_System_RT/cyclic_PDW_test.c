@@ -13,10 +13,11 @@
 
 #include "pdw_constructor.h"
 #include "tcdw_constructor.h"
-#include "time_mask.h"
+//#include "time_mask.h"
+#include "read_file.h"
 #define PORT 49152
 
-
+uint64_t TIME = 0;
 
 struct period_info {
         struct timespec next_period;
@@ -37,7 +38,7 @@ static void inc_period(struct period_info *pinfo)
 static void periodic_task_init(struct period_info *pinfo)
 {
         /* for simplicity, hardcoding a 1ms period */
-        pinfo->period_ns = 3000000000;
+        pinfo->period_ns = 1000000;
  
         clock_gettime(CLOCK_MONOTONIC, &(pinfo->next_period));
 }
@@ -48,16 +49,16 @@ static void send_pdw(int sock, char* pdw_word, unsigned long inc, int num_pdws)
 	int i = 0;
 	while(1){
 		if(num_pdws-i >= 10){
-			for(int j = 0; j<10; j++){
-				pdw_inc_toa(&pdw_word[48*(i+j)], inc);	
-			}
+			//for(int j = 0; j<10; j++){
+			//	pdw_inc_toa(&pdw_word[48*(i+j)], inc);	
+			//}
 			send(sock, &pdw_word[48*i], 480, 0);
 		        i = i+10;	
 		}
 		else if (num_pdws-i < 10){
-			for(int j = 0; j<(num_pdws-i); j++){
-				pdw_inc_toa(&pdw_word[48*(i+j)], inc);	
-			}
+			//for(int j = 0; j<(num_pdws-i); j++){
+			//	pdw_inc_toa(&pdw_word[48*(i+j)], inc);	
+			//}
 			send(sock, &pdw_word[48*i], (num_pdws-i)*48, 0);
 		       	break;	
 		}
@@ -93,33 +94,25 @@ void *simple_cyclic_task(int sock)
 
 	struct pdw_s pdw1 = {5000000, 0, false, false, true, 50000000, 0,0, false, 0, 20, 0, 0, 0, 0, 0, false, 0, 0};	
 	char *pdw_word_1 = malloc(sizeof(char *)*49);
-	pdw_constructor(pdw_word_1,pdw1,0);
-		for(int n = 0; n<48; n++){
-			printf("%x\n", pdw_word_1[n]);
-		}
 
 	//struct tcdw_s tcdw = tcdw_default;	
 	//char *tcdw_word = malloc(sizeof(char *)*17);
 	//tcdw_constructor(tcdw_word,tcdw);
 	//periodic_task_init(&pinfo);
  
-	struct emitter_s em_arr[3]; 
-	em_arr[0] = (struct emitter_s){0, 50, 500};
-	em_arr[1] = (struct emitter_s){0, 5, 40};
-	em_arr[2] = (struct emitter_s){0, 10, 90};
-	int num_pdws_out;
-	struct pdw_s *pdws_out = emitter_to_pdws(em_arr, 3,1000, &num_pdws_out);
-	char *pdw_word = malloc(sizeof(char *)*48);
-	char *pdw_words = malloc(sizeof(char *)*48*num_pdws_out);
-	printf("NUM_PDWS: %d\n", num_pdws_out);
-	int i = 0;	
-	for(int i = 0; i<num_pdws_out; i++){
-		printf("TOA: %d  TON: %d\n", pdws_out[i].TOA,pdws_out[i].TON);
-		pdw_constructor(pdw_words,pdws_out[i],i*48);	
-//	//	for(int n = 0; n<48; n++){
-//	//		printf("%x\n", pdw_word[n]);
-//	//	}
-	}
+	//struct emitter_s em_arr[2]; 
+	//em_arr[0] = (struct emitter_s){0, 2, 100};
+	//em_arr[1] = (struct emitter_s){4, 1, 15};
+	////em_arr[2] = (struct emitter_s){0, 10, 90};
+	//int num_pdws_out;
+	//struct pdw_s *pdws_out = emitter_to_pdws(em_arr, 2,1000, &num_pdws_out, TIME);
+	//char *pdw_words = malloc(sizeof(char *)*48*num_pdws_out);
+	//printf("NUM_PDWS: %d\n", num_pdws_out);
+	//int i = 0;	
+	//for(int i = 0; i<num_pdws_out; i++){
+	//	printf("TOA: %d  TON: %d\n", pdws_out[i].TOA,pdws_out[i].TON);
+	//	pdw_constructor(pdw_words,pdws_out[i],i*48);	
+	//}
 
 	
 	//send_pdw(sock,pdw_words,0, num_pdws_out);
@@ -128,9 +121,41 @@ void *simple_cyclic_task(int sock)
         //send_pdw(sock,pdw_word,0);
         //send_tcdw(sock,tcdw_word);
         //send_pdw(sock,pdw_word_1,11000);
+
+	struct emitter_s *em_arr = malloc(sizeof(struct emitter_s)*100);
+	int num_em;
+	process_pdw_file("input0.csv", em_arr, &num_em);
+	
+	//printf("num em : %d\n", num_em);
+	//for(int i = 0; i<num_em; i++){
+	//	printf("%d %d %d %f %ld\n",em_arr[i].MOP,em_arr[i].PRI,em_arr[i].PW,em_arr[i].offset, em_arr[i].FREQ_OFFSET);
+	//}
+	//struct emitter_s em_arr[3]; 
+	//em_arr[0] = (struct emitter_s){0, 2, 100,0,0,0};
+	//em_arr[1] = (struct emitter_s){4, 1, 15,0,5,0};
+	//em_arr[2] = (struct emitter_s){0, 3, 9,0,10,0};
+	double sec = 1000000;
+	
+	int num_pdws_out;
+	struct pdw_s *pdws_out;
+	char *pdw_words;
+	periodic_task_init(&pinfo);
 	while (1) {
-		//send_pdw(sock,pdw_words,2000, num_pdws_out);
-                printf("PERIODi\n");
+		pdws_out = emitter_to_pdws(em_arr, num_em,1000, &num_pdws_out, TIME);
+		pdw_words = malloc(sizeof(char *)*48*num_pdws_out);
+		int i = 0;	
+		for(int i = 0; i<num_pdws_out; i++){
+			pdw_constructor(pdw_words,pdws_out[i],i*48);	
+		}
+		
+		send_pdw(sock,pdw_words,1000, num_pdws_out);
+		if(sec/TIME == 1){
+			printf("TIME = %d  %d  %f\n", TIME, pdws_out[0].TOA, em_arr[0].offset);
+			sec = sec+1000000;
+		}	
+                free(pdw_words);
+		free(pdws_out);
+		TIME = TIME+1000;
 		wait_rest_of_period(&pinfo);
         }
 
@@ -159,7 +184,7 @@ int main(int argc, char* argv[])
  
     	// Convert IPv4 and IPv6 addresses from text to binary
     	// form
-    	if (inet_pton(AF_INET, "192.168.58.200", &serv_addr.sin_addr)
+    	if (inet_pton(AF_INET, "192.168.1.200", &serv_addr.sin_addr)
     	    <= 0) {
     	    printf(
     	        "\nInvalid address/ Address not supported \n");

@@ -12,11 +12,14 @@ void* pdw_constructor(char* pdw_word, struct pdw_s pdw,int inc){
 	uint16_t level_offset = pow(10,(-pdw.LEVEL_OFFSET/20))*(pow(2,15)-1);
 	uint16_t phase_offset = (pdw.PHASE_OFFSET/360*pow(2,16));
 	unsigned long TON = pdw.TON*(1e-6)*2.4e9;
+	unsigned int RISE_TIME = (pdw.RISE_TIME)*(1e-9)*2.4e9;
+	unsigned int FALL_TIME = (pdw.FALL_TIME)*(1e-9)*2.4e9;
+
 	long freq_inc;
 	unsigned long chip_width;
 	unsigned int burst_pri;
 
-	printf("%d",freq_offset);
+
 
 	if(pdw.MOD_TYPE == 4){
 		SEG = true;
@@ -134,12 +137,12 @@ void* pdw_constructor(char* pdw_word, struct pdw_s pdw,int inc){
 		pdw_word[29+inc] = 0x00;
 	}
 	//rise time field
-	pdw_word[30+inc] = (pdw.EDGE_TYPE << 5)|(false << 4)|(pdw.RISE_TIME >> 18);
-	pdw_word[31+inc] = (pdw.RISE_TIME >> 10) & (0xFF);
-	pdw_word[32+inc] = (pdw.RISE_TIME >> 2) & (0xFF);
-	pdw_word[33+inc] = (pdw.RISE_TIME << 6)|(pdw.FALL_TIME >> 16);
-        pdw_word[34+inc] = (pdw.FALL_TIME >> 8);
-	pdw_word[35+inc] = (pdw.FALL_TIME);
+	pdw_word[30+inc] = (pdw.EDGE_TYPE << 5)|(false << 4)|(RISE_TIME >> 18);
+	pdw_word[31+inc] = (RISE_TIME >> 10) & (0xFF);
+	pdw_word[32+inc] = (RISE_TIME >> 2) & (0xFF);
+	pdw_word[33+inc] = (RISE_TIME << 6)|(FALL_TIME >> 16);
+        pdw_word[34+inc] = (FALL_TIME >> 8);
+	pdw_word[35+inc] = (FALL_TIME);
 	//burst field
 	burst_pri = (pdw.BURST_PRI)*(1e-6)*(2.4e9);
 	pdw_word[36+inc] = (burst_pri >> 24) & (0xFF);
