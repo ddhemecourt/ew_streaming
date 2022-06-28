@@ -58,59 +58,27 @@ struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_
 	int *Size = malloc(sizeof(int)*num_emitters);
 	struct pdw_s *pdws_out = malloc(sizeof(struct pdw_s)*2048);	
 
-	//find longest PRI
-	//for(int j = 0; j<num_emitters; j++){
-	//	if(em[j].PRI > longest_len){
-	//		longest_len = em[j].PRI;
-	//	}
-	//}
 
 	longest_len = us_len;
 
-	uint64_t *Trise_arr = malloc(sizeof(uint64_t)*2048);
-	uint64_t *Tfall_arr = malloc(sizeof(uint64_t)*2048);
 	int pulse_count = 0;
+	int slot_time = floor(longest_len/num_emitters);
 	//Generate PDWs across longest PRI time per input emitter
 	for(int j = 0; j<num_emitters; j++){
+		if(floor(longest_len/num_emitters/em[j].PRI)==longest_len/num_emitters/em[j].PRI){num_pdws = num_pdws-1;}
 		double num_pdws;
-		num_pdws = floor((longest_len-em[j].offset)/em[j].PRI)+1;
-		if(floor((longest_len-em[j].offset)/em[j].PRI)==((longest_len-em[j].offset)/em[j].PRI)){num_pdws = num_pdws-1;}
-		pdws[j] = malloc(sizeof(struct pdw_s) * num_pdws);
+		num_pdws = floor(longest_len/num_emitters/em[j].PRI)+1;
+		pdws[j] = malloc(sizeof(struct pdw_s)*num_pdws);
 		Size[j] = num_pdws;
-		for(int i = 0; i<Size[j]; i++){
-			uint64_t TOA = T0 + (unsigned int)em[j].offset + i*em[j].PRI;
+		for(int i = 0; i<num_pdws; i++){
+			uint64_t TOA = T0 + i*em[j].PRI + j*slot_time;
 			struct pdw_s pdw = {TOA, em[j].MOP, false, false, false, em[j].FREQ_OFFSET,em[j].LEVEL_OFFSET,em[j].PHASE_OFFSET, em[j].EDGE_TYPE, em[j].SEGMENT_IDX, em[j].PW, 0, em[j].CHIP_WIDTH, em[j].CODE, em[j].RISE_TIME, em[j].FALL_TIME, false, 0, 0};
 			pdws[j][i] = pdw;
-			Trise_arr[pulse_count] = pdw.TOA;
-			Tfall_arr[pulse_count] = pdw.TOA + pdw.TON;
+			pdws_out[pulse_count] = pdw;
 			pulse_count++;
-			if(i == Size[j]-1){
-				em[j].offset = em[j].PRI-(T0+longest_len-TOA);
-			}
 		}
 	}
-	int mask_cnt = 0;
-	int count = 0;
-	int new_size = 0;
-	for(int j = 0; j < num_emitters; j++){
-		for(int i = 0; i<Size[j]; i++){
-			if(j == 0){
-				pdws_out[count] = pdws[j][i];
-				count++;
-				new_size++;
-			}
-			else if(time_mask(pdws[j][i],Trise_arr,Tfall_arr,mask_cnt) == 0)
-			{
-				pdws_out[count] = pdws[j][i];
-				count++;
-				new_size++;
-			}
-		}
-		free(pdws[j]);
-		mask_cnt = mask_cnt + Size[j];
-		Size[j] = new_size;
-		new_size = 0;
-	}
+
 	struct pdw_s *pdw_out = malloc(sizeof(struct pdw_s)*count);
 	pdw_sort(pdw_out,pdws_out,Size,num_emitters,count);
 	*num_pdws_out = count;
