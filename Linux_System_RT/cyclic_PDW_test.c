@@ -16,7 +16,7 @@
 //#include "time_mask.h"
 #include "read_file.h"
 #define PORT 49152
-
+#define num_bb 2
 uint64_t TIME = 0;
 
 struct period_info {
@@ -86,80 +86,45 @@ static void wait_rest_of_period(struct period_info *pinfo)
 }
 
 
-void *simple_cyclic_task(int sock)
+void *simple_cyclic_task(int *sock)
 {
         struct period_info pinfo;
  	
 	int val = 0;
-
-	struct pdw_s pdw1 = {5000000, 0, false, false, true, 50000000, 0,0, false, 0, 20, 0, 0, 0, 0, 0, false, 0, 0};	
-	char *pdw_word_1 = malloc(sizeof(char *)*49);
-
-	//struct tcdw_s tcdw = tcdw_default;	
-	//char *tcdw_word = malloc(sizeof(char *)*17);
-	//tcdw_constructor(tcdw_word,tcdw);
-	//periodic_task_init(&pinfo);
- 
-	//struct emitter_s em_arr[2]; 
-	//em_arr[0] = (struct emitter_s){0, 2, 100};
-	//em_arr[1] = (struct emitter_s){4, 1, 15};
-	////em_arr[2] = (struct emitter_s){0, 10, 90};
-	//int num_pdws_out;
-	//struct pdw_s *pdws_out = emitter_to_pdws(em_arr, 2,1000, &num_pdws_out, TIME);
-	//char *pdw_words = malloc(sizeof(char *)*48*num_pdws_out);
-	//printf("NUM_PDWS: %d\n", num_pdws_out);
-	//int i = 0;	
-	//for(int i = 0; i<num_pdws_out; i++){
-	//	printf("TOA: %d  TON: %d\n", pdws_out[i].TOA,pdws_out[i].TON);
-	//	pdw_constructor(pdw_words,pdws_out[i],i*48);	
-	//}
-
-	
-	//send_pdw(sock,pdw_words,0, num_pdws_out);
-
-
-        //send_pdw(sock,pdw_word,0);
-        //send_tcdw(sock,tcdw_word);
-        //send_pdw(sock,pdw_word_1,11000);
-
-//	struct emitter_s *em_arr = malloc(sizeof(struct emitter_s)*100);
-//	int num_em;
-//	process_pdw_file("input0.csv", em_arr, &num_em);
-
-
 
 	struct emitter_ptr_s *em_ptr_arr = malloc(sizeof(struct emitter_ptr_s)*100);
 	int num_em_ptrs;
 	process_input_file("template_schedule.csv", em_ptr_arr, &num_em_ptrs);
 	int em_ptr_i = 0;
 
-	printf("num-em_ptrS: %d\n",num_em_ptrs);
-	//printf("num em : %d\n", num_em);
-	//for(int i = 0; i<num_em; i++){
-	//	printf("%d %d %d %f %ld\n",em_arr[i].MOP,em_arr[i].PRI,em_arr[i].PW,em_arr[i].offset, em_arr[i].FREQ_OFFSET);
-	//}
-	//struct emitter_s em_arr[3]; 
-	//em_arr[0] = (struct emitter_s){0, 2, 100,0,0,0};
-	//em_arr[1] = (struct emitter_s){4, 1, 15,0,5,0};
-	//em_arr[2] = (struct emitter_s){0, 3, 9,0,10,0};
 	double sec = 1000000;
-
-	int num_em;
+	int num_em[num_bb];
 	int num_pdws_out;
 	struct pdw_s *pdws_out;
 	char *pdw_words;
-	struct emitter_s *em_arr = malloc(sizeof(struct emitter_s)*100);
+	struct emitter_s **em_arr = malloc(sizeof(struct emitter_s *)*num_bb);
+	for(int i = 0; i<num_bb; i++){
+		em_arr[i] = malloc(sizeof(struct emitter_s)*100);
+	}
+		
 	int last_t = em_ptr_arr[num_em_ptrs-1].timestep;
 	periodic_task_init(&pinfo);
 	while (1) {
-
-		if(em_ptr_arr[em_ptr_i].timestep == TIME && strcmp(em_ptr_arr[em_ptr_i].type,"TCDW")){
-//			printf("GOT EMITTER\n");	
-			free(em_arr);
-			em_arr = malloc(sizeof(struct emitter_s)*100);
-			process_pdw_file(em_ptr_arr[em_ptr_i].filename, em_arr, &num_em);
+		if(em_ptr_arr[em_ptr_i].timestep == TIME && !strcmp(em_ptr_arr[em_ptr_i].type,"Emitter")){
+//			printf("GOT EMITTER\n");
+			for (int i = 0; i<num_bb; i++){	
+				free(em_arr[i]);
+				em_arr[i] = malloc(sizeof(struct emitter_s)*100);				
+				if(em_ptr_arr[em_ptr_i].basebands[i] == 1){
+					process_pdw_file(em_ptr_arr[em_ptr_i].filename, em_arr[i], &num_em[i]);
+				}
+			}
 			em_ptr_arr[em_ptr_i].timestep = em_ptr_arr[em_ptr_i].timestep + last_t + 10000;
 			em_ptr_i++;
+			if(em_ptr_i == num_em_ptrs){
+				em_ptr_i = 0;
+			}
+			continue;
 
 		}
 		else if(em_ptr_arr[em_ptr_i].timestep == TIME && !strcmp(em_ptr_arr[em_ptr_i].type,"TCDW")){	
@@ -168,38 +133,46 @@ void *simple_cyclic_task(int sock)
 			struct tcdw_s tcdw = {TIME,em_ptr_arr[em_ptr_i].PATH, em_ptr_arr[em_ptr_i].CMD, em_ptr_arr[em_ptr_i].FVAL, em_ptr_arr[em_ptr_i].LVAL};	
 			char *tcdw_word = malloc(sizeof(char *)*17);
 			tcdw_constructor(tcdw_word,tcdw);
-			send_tcdw(sock,tcdw_word);
+			if(em_ptr_arr[em_ptr_i].basebands[0] == 1){
+//				printf("Sending on 0\n");
+				send_tcdw(sock[0],tcdw_word);
+			}
+			if(em_ptr_arr[em_ptr_i].basebands[1] == 1){
+//				printf("Sending on 1\n");
+				send_tcdw(sock[1],tcdw_word);
+			}
+
 			em_ptr_arr[em_ptr_i].timestep = em_ptr_arr[em_ptr_i].timestep + last_t + 10000;
 			for(int x = 0; x < 10; x++){
 				wait_rest_of_period(&pinfo);
 				TIME = TIME+1000;
 			}
 			em_ptr_i++;
+			if(em_ptr_i == num_em_ptrs){
+				em_ptr_i = 0;
+			}
 			continue;
 		}
 
-		if(em_ptr_i == num_em_ptrs){
-			em_ptr_i = 0;
-		}
 
-		
+		for(int i = 0; i<num_bb; i++){
+			pdws_out = emitter_to_pdws(em_arr[i], num_em[i],1000, &num_pdws_out, TIME);
+			pdw_words = malloc(sizeof(char *)*48*num_pdws_out);
+			for(int j = 0; j<num_pdws_out; j++){
+				pdw_constructor(pdw_words,pdws_out[j],j*48);	
+			}
 
-		pdws_out = emitter_to_pdws(em_arr, num_em,1000, &num_pdws_out, TIME);
-		pdw_words = malloc(sizeof(char *)*48*num_pdws_out);
-		int i = 0;	
-		for(int i = 0; i<num_pdws_out; i++){
-			pdw_constructor(pdw_words,pdws_out[i],i*48);	
-		}
-		
-		send_pdw(sock,pdw_words,1000, num_pdws_out);
+			send_pdw(sock[i],pdw_words,1000, num_pdws_out);
+                	free(pdw_words);
+			free(pdws_out);
+		}	
 		if(sec/TIME == 1){
-			printf("TIME = %d  %d  %f\n", TIME, pdws_out[0].TOA, em_arr[0].offset);
+			printf("TIME = %d  %ld \n", TIME, pdws_out[0].TOA);
 			sec = sec+1000000;
 		}	
-                free(pdw_words);
-		free(pdws_out);
 		TIME = TIME+1000;
 		wait_rest_of_period(&pinfo);
+
         }
 
         return NULL;
@@ -213,32 +186,52 @@ int main(int argc, char* argv[])
         pthread_attr_t attr,attr2;
         pthread_t thread, thread2;
         int ret;
+	int num_ports = 3;
 
-    	int sock = 0, client_fd;
-    	struct sockaddr_in serv_addr;
-    	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    	    printf("\n Socket creation error \n");
-    	    return;
-    	}
+    	int *sock = malloc(sizeof(int)*3);
+	int client_fd;
+    	struct sockaddr_in *serv_addr = malloc(sizeof(struct sockaddr_in)*num_ports);
+	for (int n = 0; n<num_ports; n++){
+		sock[n] = n;
+    		if ((sock[n] = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    		    printf("\n Socket creation error \n");
+    		    return;
+    		}
+
+    		serv_addr[n].sin_family = AF_INET;
+    		serv_addr[n].sin_port = htons(PORT);
+
+	}
 
 
-    	serv_addr.sin_family = AF_INET;
-    	serv_addr.sin_port = htons(PORT);
- 
     	// Convert IPv4 and IPv6 addresses from text to binary
     	// form
-    	if (inet_pton(AF_INET, "192.168.1.200", &serv_addr.sin_addr)
+    	if (inet_pton(AF_INET, "192.168.1.200", &serv_addr[0].sin_addr)
+    	    <= 0) {
+    	    printf(
+    	        "\nInvalid address/ Address not supported \n");
+    	    return;
+    	}
+    	if (inet_pton(AF_INET, "192.168.58.201", &serv_addr[1].sin_addr)
     	    <= 0) {
     	    printf(
     	        "\nInvalid address/ Address not supported \n");
     	    return;
     	}
  
+
     	if ((client_fd
-    	     = connect(sock, (struct sockaddr*)&serv_addr,
-    	               sizeof(serv_addr)))
+    	     = connect(sock[0], (struct sockaddr0*)&serv_addr[0],
+    	               sizeof(serv_addr[0])))
     	    < 0) {
-    	    printf("\nConnection Failed \n");
+    	    printf("\nConnection Failed 0\n");
+    	    return;
+    	}
+    	if ((client_fd
+    	     = connect(sock[1], (struct sockaddr1*)&serv_addr[1],
+    	               sizeof(serv_addr[1])))
+    	    < 0) {
+    	    printf("\nConnection Failed 1\n");
     	    return;
     	}
 

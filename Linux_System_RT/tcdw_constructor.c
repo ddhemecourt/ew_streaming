@@ -28,7 +28,7 @@ void* tcdw_constructor(char* tcdw_word,struct tcdw_s tcdw){
 	else{
 		temp = tcdw.LVAL;
 	}
-
+	
 
 	L_INT = (unsigned int)floor(temp);
 	L_TENTH = (unsigned int)floor(10*(temp-floor(temp)));

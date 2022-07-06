@@ -188,7 +188,7 @@ void process_input_file(char *filename, struct emitter_ptr_s *em_arr, int *num_e
                 }
                 if (column == 5) {
 			if(!strcmp("TCDW",em_arr[i].type)){	
-                    		em_arr[i].FVAL = atoi(value);
+                    		em_arr[i].FVAL = atol(value);
 			}
                 }
                 if (column == 6) {
@@ -196,7 +196,7 @@ void process_input_file(char *filename, struct emitter_ptr_s *em_arr, int *num_e
                     		em_arr[i].LVAL = atoi(value);
 			}
                 }
-                // Column 4 
+                // Column 4
                 if (column > 6) {
 			em_arr[i].basebands[BB_col] = atoi(value);
 			BB_col++;
