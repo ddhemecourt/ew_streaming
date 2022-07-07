@@ -65,9 +65,9 @@ struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_
 	int slot_time = floor(longest_len/num_emitters);
 	//Generate PDWs across longest PRI time per input emitter
 	for(int j = 0; j<num_emitters; j++){
-		if(floor(longest_len/num_emitters/em[j].PRI)==longest_len/num_emitters/em[j].PRI){num_pdws = num_pdws-1;}
 		double num_pdws;
 		num_pdws = floor(longest_len/num_emitters/em[j].PRI)+1;
+		if(floor(longest_len/num_emitters/em[j].PRI)==longest_len/num_emitters/em[j].PRI){num_pdws = num_pdws-1;}
 		pdws[j] = malloc(sizeof(struct pdw_s)*num_pdws);
 		Size[j] = num_pdws;
 		for(int i = 0; i<num_pdws; i++){
@@ -79,15 +79,13 @@ struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_
 		}
 	}
 
-	struct pdw_s *pdw_out = malloc(sizeof(struct pdw_s)*count);
-	pdw_sort(pdw_out,pdws_out,Size,num_emitters,count);
-	*num_pdws_out = count;
-	free(pdws_out);
+	//struct pdw_s *pdw_out = malloc(sizeof(struct pdw_s)*pulse_count);
+	//pdw_sort(pdw_out,pdws_out,Size,num_emitters,pulse_count);
+	*num_pdws_out = pulse_count;
+	//free(pdws_out);
 	free(Size);
 	free(pdws);
-	free(Trise_arr);
-	free(Tfall_arr);
-	return pdw_out;
+	return pdws_out;
 }
 
 //int main(){
