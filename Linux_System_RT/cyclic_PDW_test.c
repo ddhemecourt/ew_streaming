@@ -94,17 +94,21 @@ void *simple_cyclic_task(int *sock)
 
 	struct emitter_ptr_s *em_ptr_arr = malloc(sizeof(struct emitter_ptr_s)*100);
 	int num_em_ptrs;
-	process_input_file("template_schedule.csv", em_ptr_arr, &num_em_ptrs);
+	process_input_file("template_schedule_basic00.csv", em_ptr_arr, &num_em_ptrs);
 	int em_ptr_i = 0;
 
 	double sec = 1000000;
 	int num_em[num_bb];
+	bool retune_flag[num_bb];
+	int retune_time[num_bb];
 	int num_pdws_out;
 	struct pdw_s *pdws_out;
 	char *pdw_words;
 	struct emitter_s **em_arr = malloc(sizeof(struct emitter_s *)*num_bb);
 	for(int i = 0; i<num_bb; i++){
 		em_arr[i] = malloc(sizeof(struct emitter_s)*100);
+		retune_time[i] = 0;
+		retune_flag[i] = false;
 	}
 		
 	int last_t = em_ptr_arr[num_em_ptrs-1].timestep;
@@ -125,6 +129,7 @@ void *simple_cyclic_task(int *sock)
 				em_ptr_i = 0;
 			}
 			continue;
+		
 
 		}
 		else if(em_ptr_arr[em_ptr_i].timestep == TIME && !strcmp(em_ptr_arr[em_ptr_i].type,"TCDW")){	
@@ -136,17 +141,19 @@ void *simple_cyclic_task(int *sock)
 			if(em_ptr_arr[em_ptr_i].basebands[0] == 1){
 //				printf("Sending on 0\n");
 				send_tcdw(sock[0],tcdw_word);
+				retune_flag[0] = true;
 			}
 			if(em_ptr_arr[em_ptr_i].basebands[1] == 1){
 //				printf("Sending on 1\n");
 				send_tcdw(sock[1],tcdw_word);
+				retune_flag[1] = true;
 			}
 
-			em_ptr_arr[em_ptr_i].timestep = em_ptr_arr[em_ptr_i].timestep + last_t + 10000;
-			for(int x = 0; x < 10; x++){
-				wait_rest_of_period(&pinfo);
-				TIME = TIME+1000;
-			}
+			//em_ptr_arr[em_ptr_i].timestep = em_ptr_arr[em_ptr_i].timestep + last_t + 10000;
+			//for(int x = 0; x < 10; x++){
+			//	wait_rest_of_period(&pinfo);
+			//	TIME = TIME+1000;
+			//}
 			em_ptr_i++;
 			if(em_ptr_i == num_em_ptrs){
 				em_ptr_i = 0;
@@ -156,6 +163,14 @@ void *simple_cyclic_task(int *sock)
 
 
 		for(int i = 0; i<num_bb; i++){
+			if(retune_flag[i] == true){
+				retune_time[i]++;
+				if(retune_time[i] == 10){
+					retune_flag[i] = false;
+					retune_time[i] = 0;
+				}
+				continue;
+			}
 			pdws_out = emitter_to_pdws(em_arr[i], num_em[i],1000, &num_pdws_out, TIME);
 			pdw_words = malloc(sizeof(char *)*48*num_pdws_out);
 			for(int j = 0; j<num_pdws_out; j++){
@@ -212,7 +227,7 @@ int main(int argc, char* argv[])
     	        "\nInvalid address/ Address not supported \n");
     	    return;
     	}
-    	if (inet_pton(AF_INET, "192.168.58.201", &serv_addr[1].sin_addr)
+    	if (inet_pton(AF_INET, "192.168.2.201", &serv_addr[1].sin_addr)
     	    <= 0) {
     	    printf(
     	        "\nInvalid address/ Address not supported \n");

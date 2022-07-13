@@ -13,6 +13,7 @@ struct emitter_s {
 	unsigned int FALL_TIME : 22;
 	unsigned long CHIP_WIDTH : 44;
 	unsigned int CODE : 4;	
+	float FREQ_INC;	
 	//	char *MOP; // 'UNMOD', 'LFM', 'TFM', 'Barker' , 'Arb'
 	
 };

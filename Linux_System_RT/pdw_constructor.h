@@ -17,7 +17,7 @@ struct pdw_s {
 	bool EDGE_TYPE;
 	unsigned int SEGMENT_IDX : 24;
 	unsigned long TON;
-	long FREQ_INC;
+	unsigned long FREQ_INC;
 	unsigned long CHIP_WIDTH : 44;
 	unsigned int CODE : 4;
 	unsigned int RISE_TIME : 22;
