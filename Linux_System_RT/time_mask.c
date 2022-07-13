@@ -72,7 +72,7 @@ struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_
 		Size[j] = num_pdws;
 		for(int i = 0; i<num_pdws; i++){
 			uint64_t TOA = T0 + i*em[j].PRI + j*slot_time;
-			struct pdw_s pdw = {TOA, em[j].MOP, false, false, false, em[j].FREQ_OFFSET,em[j].LEVEL_OFFSET,em[j].PHASE_OFFSET, em[j].EDGE_TYPE, em[j].SEGMENT_IDX, em[j].PW, 0, em[j].CHIP_WIDTH, em[j].CODE, em[j].RISE_TIME, em[j].FALL_TIME, false, 0, 0};
+			struct pdw_s pdw = {TOA, em[j].MOP, false, false, false, em[j].FREQ_OFFSET,em[j].LEVEL_OFFSET,em[j].PHASE_OFFSET, em[j].EDGE_TYPE, em[j].SEGMENT_IDX, em[j].PW, em[j].FREQ_INC, em[j].CHIP_WIDTH, em[j].CODE, em[j].RISE_TIME, em[j].FALL_TIME, false, 0, 0};
 			pdws[j][i] = pdw;
 			pdws_out[pulse_count] = pdw;
 			pulse_count++;

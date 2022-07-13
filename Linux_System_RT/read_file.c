@@ -106,6 +106,9 @@ void process_pdw_file(char *filename, struct emitter_s *em_arr, int *num_em)
 		if (column == 11) {
 			em_arr[i].PHASE_OFFSET = atof(value);
 		}
+		if (column == 12) {
+			em_arr[i].FREQ_INC = atof(value);
+		}
  
                 value = strtok(NULL, ", ");
                 column++;

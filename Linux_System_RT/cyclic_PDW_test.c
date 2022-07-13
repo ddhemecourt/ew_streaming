@@ -226,7 +226,7 @@ int main(int argc, char* argv[])
     	        "\nInvalid address/ Address not supported \n");
     	    return;
     	}
-    	if (inet_pton(AF_INET, "192.168.58.201", &serv_addr[1].sin_addr)
+    	if (inet_pton(AF_INET, "192.168.2.201", &serv_addr[1].sin_addr)
     	    <= 0) {
     	    printf(
     	        "\nInvalid address/ Address not supported \n");
