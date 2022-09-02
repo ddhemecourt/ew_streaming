@@ -44,6 +44,20 @@ static void periodic_task_init(struct period_info *pinfo)
 }
 
 
+int get_time(int sock)
+{	
+	int valread;
+	char buffer[1024] = {0};
+	char *t_str = ":SOURce1:BB:ESEQuencer:RTCI:STR:STIM?\n";
+	send(sock, t_str, strlen(t_str),0);
+    	printf("Time query message sent\n");
+    	valread = read(sock, buffer, 1024);
+    	printf("sys t = %s\n", buffer);
+	return atoi(buffer);
+}
+
+
+
 static void send_pdw(int sock, char* pdw_word, unsigned long inc, int num_pdws)
 {
 	int i = 0;
@@ -88,7 +102,10 @@ static void wait_rest_of_period(struct period_info *pinfo)
 
 void *simple_cyclic_task(int *sock)
 {
-        struct period_info pinfo;
+	TIME = 1000000*get_time(sock[2])+1000;
+	printf("TIME = %d\n", TIME);
+
+	struct period_info pinfo;
  	
 	int val = 0;
 
@@ -114,7 +131,8 @@ void *simple_cyclic_task(int *sock)
 	int last_t = em_ptr_arr[num_em_ptrs-1].timestep;
 	periodic_task_init(&pinfo);
 	while (1) {
-		if(em_ptr_arr[em_ptr_i].timestep == TIME && !strcmp(em_ptr_arr[em_ptr_i].type,"Emitter")){
+		//if(em_ptr_arr[em_ptr_i].timestep == TIME && !strcmp(em_ptr_arr[em_ptr_i].type,"Emitter")){
+		if(TIME%1000000 == 0 && !strcmp(em_ptr_arr[em_ptr_i].type,"Emitter")){
 //			printf("GOT EMITTER\n");
 			for (int i = 0; i<num_bb; i++){	
 				free(em_arr[i]);
@@ -128,7 +146,7 @@ void *simple_cyclic_task(int *sock)
 			if(em_ptr_i == num_em_ptrs){
 				em_ptr_i = 0;
 			}
-			continue;
+			//continue;
 		
 
 		}
@@ -202,7 +220,8 @@ int main(int argc, char* argv[])
         pthread_t thread, thread2;
         int ret;
 	int num_ports = 3;
-
+	const char *IP[] = {"192.168.1.200","192.168.2.201","192.168.58.25"};
+	const int *ports[] = {49152, 49152, 5025};
     	int *sock = malloc(sizeof(int)*3);
 	int client_fd;
     	struct sockaddr_in *serv_addr = malloc(sizeof(struct sockaddr_in)*num_ports);
@@ -214,14 +233,28 @@ int main(int argc, char* argv[])
     		}
 
     		serv_addr[n].sin_family = AF_INET;
-    		serv_addr[n].sin_port = htons(PORT);
+    		serv_addr[n].sin_port = htons(ports[n]);
+    	
+		if (inet_pton(AF_INET, IP[n], &serv_addr[n].sin_addr)
+    		    <= 0) {
+    		    printf(
+    		        "\nInvalid address/ Address not supported \n");
+    		    return;
+    		}
 
+    		if ((client_fd
+    		     = connect(sock[n], (struct sockaddr*)&serv_addr[n],
+    		               sizeof(serv_addr[n])))
+    		    < 0) {
+    		    printf("\nConnection Failed 0 on n = %d\n", n);
+    		    return;
+    		}
 	}
 
 
     	// Convert IPv4 and IPv6 addresses from text to binary
     	// form
-    	if (inet_pton(AF_INET, "192.168.1.200", &serv_addr[0].sin_addr)
+    	/*if (inet_pton(AF_INET, "192.168.1.200", &serv_addr[0].sin_addr)
     	    <= 0) {
     	    printf(
     	        "\nInvalid address/ Address not supported \n");
@@ -232,10 +265,10 @@ int main(int argc, char* argv[])
     	    printf(
     	        "\nInvalid address/ Address not supported \n");
     	    return;
-    	}
+    	}*/
  
 
-    	if ((client_fd
+    	/*if ((client_fd
     	     = connect(sock[0], (struct sockaddr0*)&serv_addr[0],
     	               sizeof(serv_addr[0])))
     	    < 0) {
@@ -248,7 +281,7 @@ int main(int argc, char* argv[])
     	    < 0) {
     	    printf("\nConnection Failed 1\n");
     	    return;
-    	}
+    	}*/
 
         /* Lock memory */
         if(mlockall(MCL_CURRENT|MCL_FUTURE) == -1) {
