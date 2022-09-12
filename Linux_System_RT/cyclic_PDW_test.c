@@ -192,6 +192,10 @@ void *simple_cyclic_task(int *sock)
 			pdws_out = emitter_to_pdws(em_arr[i], num_em[i],1000, &num_pdws_out, TIME);
 			pdw_words = malloc(sizeof(char *)*48*num_pdws_out);
 			for(int j = 0; j<num_pdws_out; j++){
+				if(i == 1){
+					pdws_out[j].PHASE_OFFSET = 20;
+					pdws_out[j].LEVEL_OFFSET = 5;
+				}
 				pdw_constructor(pdw_words,pdws_out[j],j*48);	
 			}
 
