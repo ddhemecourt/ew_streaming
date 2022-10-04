@@ -52,7 +52,7 @@ int time_mask(struct pdw_s pdw, uint64_t *Trise_arr, uint64_t *Tfall_arr, int le
 }
 
 
-struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_len, int *num_pdws_out, uint64_t T0){
+struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_len, int *num_pdws_out, uint64_t T0, int bb_num){
 	double longest_len = 0;
 	struct pdw_s **pdws = (struct pdw_s**)malloc(sizeof(struct pdw_s*) * num_emitters); 
 	int *Size = malloc(sizeof(int)*num_emitters);
@@ -73,19 +73,22 @@ struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_
 	//Generate PDWs across longest PRI time per input emitter
 	for(int j = 0; j<num_emitters; j++){
 		double num_pdws;
+		//num_pdws = floor((longest_len-em[j].offset)/em[j].PRI);
 		num_pdws = floor((longest_len-em[j].offset)/em[j].PRI)+1;
 		if(floor((longest_len-em[j].offset)/em[j].PRI)==((longest_len-em[j].offset)/em[j].PRI)){num_pdws = num_pdws-1;}
 		pdws[j] = malloc(sizeof(struct pdw_s) * num_pdws);
 		Size[j] = num_pdws;
 		for(int i = 0; i<Size[j]; i++){
 			uint64_t TOA = T0 + (unsigned int)em[j].offset + i*em[j].PRI;
+			//printf("TOA: %d\n", TOA);
 			struct pdw_s pdw = {TOA, em[j].MOP, false, false, false, em[j].FREQ_OFFSET,em[j].LEVEL_OFFSET,em[j].PHASE_OFFSET, em[j].EDGE_TYPE, em[j].SEGMENT_IDX, em[j].PW, em[j].FREQ_INC, em[j].CHIP_WIDTH, em[j].CODE, em[j].RISE_TIME, em[j].FALL_TIME, false, 0, 0};
 			pdws[j][i] = pdw;
 			Trise_arr[pulse_count] = pdw.TOA;
 			Tfall_arr[pulse_count] = pdw.TOA + pdw.TON;
 			pulse_count++;
-			if(i == Size[j]-1){
-				em[j].offset = em[j].PRI-(T0+longest_len-TOA);
+			if(i == Size[j]-1 && bb_num == 0){
+				//em[j].offset = (T0+longest_len-TOA) - em[j].PRI;
+				em[j].offset =  em[j].PRI-(T0+longest_len-TOA);
 			}
 		}
 	}
