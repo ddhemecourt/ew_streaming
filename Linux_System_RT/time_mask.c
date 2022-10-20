@@ -44,7 +44,7 @@ void pdw_sort(struct pdw_s *arr_out, struct pdw_s *arr, int Size[], int num_emit
 
 int time_mask(struct pdw_s pdw, uint64_t *Trise_arr, uint64_t *Tfall_arr, int len){
 	for (int i = 0; i<len; i++){
-		if(pdw.TOA >= Trise_arr[i] && pdw.TOA <= Tfall_arr[i]){
+		if(pdw.TOA >= Trise_arr[i] && pdw.TOA < Tfall_arr[i]){
 			return 1;		
 		}	
 	}
