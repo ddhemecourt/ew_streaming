@@ -234,10 +234,10 @@ void process_pdw_string(char *buff, struct emitter_s *em_arr, int *num_em, float
 			em_arr[i].Burst_Len = atoi(value);
 		}
 		if (column%18 == 16){
-			em_arr[i].CPI_Offset = atoi(value);
+			em_arr[i].CPI_offset = atoi(value);
 		}
 		if (column%18 == 17){
-			em_arr[i].CPI_Offset = atoi(value);
+			em_arr[i].CPI_offset = atoi(value);
 		}
  
                 value = strtok(NULL, ", ");

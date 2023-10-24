@@ -82,7 +82,7 @@ struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_
 		if(floor((longest_len-em[j].CPI_offset)/em[j].CPI)==((longest_len-em[j].CPI_offset)/em[j].CPI)){num_burst = num_burst-1;}
 		CPI_Size[j] = num_burst;
 		for(int x = 0; x < CPI_Size[j]; x++){
-			Trise_CPI_arr[x] = T0 + (unsigned int)em[j].CPI_offset + i*em[j].CPI;
+			Trise_CPI_arr[x] = T0 + (unsigned int)em[j].CPI_offset + x*em[j].CPI;
 			Tfall_CPI_arr[x] = Trise_CPI_arr[x] + em[j].Burst_Len;
 		}
 		

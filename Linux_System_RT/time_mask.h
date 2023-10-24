@@ -20,6 +20,7 @@ struct emitter_s {
 	int Direction;
 	unsigned long CPI;
 	unsigned long Burst_Len;
+	int BURSTED;
 	float CPI_offset;
 };
 
