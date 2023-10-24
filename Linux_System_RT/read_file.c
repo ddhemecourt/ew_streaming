@@ -146,22 +146,22 @@ void process_pdw_string(char *buff, struct emitter_s *em_arr, int *num_em, float
 	    free(em_arr);
 	    em_arr = malloc(sizeof(struct emitter_s)*100);				
             while (value) {
-    		if (column%14 == 0 && column>0) {
+    		if (column%18 == 0 && column>0) {
                     i++;
                 }
                 // Column 1
-                if (column%14 == 0) {
+                if (column%18 == 0) {
                     em_arr[i].MOP = atoi(value);
 
                 }
  
                 // Column 2
-                if (column%14 == 1) {
+                if (column%18 == 1) {
                     em_arr[i].PRI = atoi(value);
                 }
  
                 // Column 3
-                if (column%14 == 2) {
+                if (column%18 == 2) {
 		    if(em_arr[i].MOP == 4){
 		    	em_arr[i].PW = 0;
 		    	em_arr[i].SEGMENT_IDX = atoi(value);
@@ -172,11 +172,11 @@ void process_pdw_string(char *buff, struct emitter_s *em_arr, int *num_em, float
 		    } 
                 }
 
-		if (column%14 == 3) {
+		if (column%18 == 3) {
 			em_arr[i].offset = atof(value);
 		}
 
-		if(column%14 == 4){
+		if(column%18 == 4){
 			if(em_arr[i].MOP != 3){
 				em_arr[i].EDGE_TYPE = atoi(value);
 			}
@@ -185,7 +185,7 @@ void process_pdw_string(char *buff, struct emitter_s *em_arr, int *num_em, float
 			}	
 		}
 
-		if(column%14 == 5){
+		if(column%18 == 5){
 			if(em_arr[i].MOP != 3){
 				em_arr[i].RISE_TIME = atoi(value);
 			}
@@ -194,7 +194,7 @@ void process_pdw_string(char *buff, struct emitter_s *em_arr, int *num_em, float
 			}	
 		}
 		
-		if(column%14 == 6){
+		if(column%18 == 6){
 			if(em_arr[i].MOP != 3){
 				em_arr[i].FALL_TIME = atoi(value);
 			}
@@ -203,29 +203,41 @@ void process_pdw_string(char *buff, struct emitter_s *em_arr, int *num_em, float
 			}	
 		}
 
-		if(em_arr[i].MOP == 3 && column%14 == 7){
+		if(em_arr[i].MOP == 3 && column%18 == 7){
 			em_arr[i].CHIP_WIDTH = atoi(value); 
 		}
 
-		if(em_arr[i].MOP == 3 && column%14 == 8){
+		if(em_arr[i].MOP == 3 && column%18 == 8){
 			em_arr[i].CODE = atoi(value); 
 		}
-		if (column%14 == 9) {
+		if (column%18 == 9) {
 			em_arr[i].FREQ_OFFSET = atof(value);
 		}
-		if (column%14 == 10) {
-			em_arr[i].LEVEL_OFFSET = atof(value)+7; //hard coding 5dB offset margin calibratioin level should be 5dB higher than reference level
-			em_arr[i].REF_LEVEL_OFFSET = atof(value)+7;
+		if (column%18 == 10) {
+			em_arr[i].LEVEL_OFFSET = atof(value); //hard coding 5dB offset margin calibratioin level should be 5dB higher than reference level
+			em_arr[i].REF_LEVEL_OFFSET = atof(value);
 		}
-		if (column%14 == 11) {
+		if (column%18 == 11) {
 			em_arr[i].PHASE_OFFSET = atof(value);
 			em_arr[i].REF_PHASE_OFFSET = atof(value);
 		}
-		if (column%14 == 12) {
+		if (column%18 == 12) {
 			em_arr[i].FREQ_INC = atof(value);
 		}
-		if (column%14 == 13){
-			em_arr[i].Direction = atoi(value);
+		if (column%18 == 13){
+			em_arr[i].BURSTED = atoi(value);
+		}
+		if (column%18 == 14){
+			em_arr[i].CPI = atoi(value);
+		}
+		if (column%18 == 15){
+			em_arr[i].Burst_Len = atoi(value);
+		}
+		if (column%18 == 16){
+			em_arr[i].CPI_Offset = atoi(value);
+		}
+		if (column%18 == 17){
+			em_arr[i].CPI_Offset = atoi(value);
 		}
  
                 value = strtok(NULL, ", ");

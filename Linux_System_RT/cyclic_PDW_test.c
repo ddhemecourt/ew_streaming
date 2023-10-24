@@ -206,7 +206,7 @@ int main(int argc, char* argv[])
 
 	/*ESTABLISH CLIENT CONNECTIONS TO PDW STREAMING PORTS AND CONTROL PORT*/
 	int num_ports = 3;
-	const char *IP[] = {"192.168.1.200","192.168.2.201","192.168.58.25"};
+	const char *IP[] = {"192.168.58.21","192.168.58.24","192.168.58.11"};
 	const int *ports[] = {49152, 49152, 5025};
     	int *sock = malloc(sizeof(int)*4);
 	int client_fd;

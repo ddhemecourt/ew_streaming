@@ -17,7 +17,10 @@ struct emitter_s {
 	unsigned int CODE : 4;	
 	float FREQ_INC;	
 	//	char *MOP; // 'UNMOD', 'LFM', 'TFM', 'Barker' , 'Arb'
-	int Direction;	
+	int Direction;
+	unsigned long CPI;
+	unsigned long Burst_Len;
+	float CPI_offset;
 };
 
 

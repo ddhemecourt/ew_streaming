@@ -56,6 +56,7 @@ struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_
 	double longest_len = 0;
 	struct pdw_s **pdws = (struct pdw_s**)malloc(sizeof(struct pdw_s*) * num_emitters); 
 	int *Size = malloc(sizeof(int)*num_emitters);
+	int *CPI_Size = malloc(sizeof(int)*num_emitters);
 	struct pdw_s *pdws_out = malloc(sizeof(struct pdw_s)*2048);	
 
 	//find longest PRI
@@ -67,13 +68,25 @@ struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_
 
 	longest_len = us_len;
 
+	
+	uint64_t *Trise_CPI_arr = malloc(sizeof(uint64_t)*2048);
+	uint64_t *Tfall_CPI_arr = malloc(sizeof(uint64_t)*2048);
+
 	uint64_t *Trise_arr = malloc(sizeof(uint64_t)*2048);
 	uint64_t *Tfall_arr = malloc(sizeof(uint64_t)*2048);
 	int pulse_count = 0;
 	//Generate PDWs across longest PRI time per input emitter
 	for(int j = 0; j<num_emitters; j++){
+		double num_burst;
+		num_burst = floor((longest_len-em[j].CPI_offset)/em[j].CPI)+1;
+		if(floor((longest_len-em[j].CPI_offset)/em[j].CPI)==((longest_len-em[j].CPI_offset)/em[j].CPI)){num_burst = num_burst-1;}
+		CPI_Size[j] = num_burst;
+		for(int x = 0; x < CPI_Size[j]; x++){
+			Trise_CPI_arr[x] = T0 + (unsigned int)em[j].CPI_offset + i*em[j].CPI;
+			Tfall_CPI_arr[x] = Trise_CPI_arr[x] + em[j].Burst_Len;
+		}
+		
 		double num_pdws;
-		//num_pdws = floor((longest_len-em[j].offset)/em[j].PRI);
 		num_pdws = floor((longest_len-em[j].offset)/em[j].PRI)+1;
 		if(floor((longest_len-em[j].offset)/em[j].PRI)==((longest_len-em[j].offset)/em[j].PRI)){num_pdws = num_pdws-1;}
 		pdws[j] = malloc(sizeof(struct pdw_s) * num_pdws);
