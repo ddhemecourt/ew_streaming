@@ -17,7 +17,7 @@
 //#include "time_mask.h"
 #include "read_file.h"
 #define PORT 49152
-#define num_bb 2
+#define num_bb 4
 #define SA struct sockaddr
 #define MAX 80
 uint64_t TIME = 0;
@@ -105,7 +105,7 @@ static void wait_rest_of_period(struct period_info *pinfo)
 
 void *simple_cyclic_task(int *sock)
 {
-	TIME = 1000000*get_time(sock[2])+1000;
+	TIME = 1000000*get_time(sock[4])+1000;
 	printf("TIME = %d\n", TIME);
 
 	struct period_info pinfo;
@@ -139,7 +139,7 @@ void *simple_cyclic_task(int *sock)
 	periodic_task_init(&pinfo);
 	while (1) {
 		bzero(buff, MAX);
-		z = recv(sock[3], buff, 10000,0);
+		z = recv(sock[5], buff, 10000,0);
 		if(z > 10){
 			for (int i = 0; i<num_bb; i++){	
 //				free(em_arr);
@@ -205,10 +205,10 @@ int main(int argc, char* argv[])
         int ret;
 
 	/*ESTABLISH CLIENT CONNECTIONS TO PDW STREAMING PORTS AND CONTROL PORT*/
-	int num_ports = 3;
-	const char *IP[] = {"192.168.1.200","192.168.2.201","192.168.58.25"};
-	const int *ports[] = {49152, 49152, 5025};
-    	int *sock = malloc(sizeof(int)*4);
+	int num_ports = 5;
+	const char *IP[] = {"192.168.58.21","192.168.58.22","192.168.58.23","192.168.58.24","192.168.58.11"};
+	const int *ports[] = {49152, 49152, 49152, 49152, 5025};
+    	int *sock = malloc(sizeof(int)*5);
 	int client_fd;
 	struct sockaddr_in *serv_addr = malloc(sizeof(struct sockaddr_in)*num_ports);
 	for (int n = 0; n<num_ports; n++){
@@ -277,15 +277,15 @@ int main(int argc, char* argv[])
     	len = sizeof(cli);
    
     	// Accept the data packet from client and verification
-    	sock[3] = accept(sockfd, (SA*)&cli, &len);
-    	if (sock[3] < 0) {
+    	sock[5] = accept(sockfd, (SA*)&cli, &len);
+    	if (sock[5] < 0) {
     	    printf("server accept failed...\n");
     	    exit(0);
     	}
     	else
     	    printf("server accept the client...\n");
 
-	fcntl(sock[3], F_SETFL, O_NONBLOCK);
+	fcntl(sock[5], F_SETFL, O_NONBLOCK);
 	/*ESTABLISH HIGH PRIORITY THREAD TO EXECUTE PROGRAM*/
 
         /* Lock memory */
