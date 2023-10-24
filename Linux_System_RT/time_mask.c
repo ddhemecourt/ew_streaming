@@ -77,14 +77,14 @@ struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_
 	int pulse_count = 0;
 	//Generate PDWs across longest PRI time per input emitter
 	for(int j = 0; j<num_emitters; j++){
-		double num_burst;
+		/*double num_burst;
 		num_burst = floor((longest_len-em[j].CPI_offset)/em[j].CPI)+1;
 		if(floor((longest_len-em[j].CPI_offset)/em[j].CPI)==((longest_len-em[j].CPI_offset)/em[j].CPI)){num_burst = num_burst-1;}
 		CPI_Size[j] = num_burst;
 		for(int x = 0; x < CPI_Size[j]; x++){
 			Trise_CPI_arr[x] = T0 + (unsigned int)em[j].CPI_offset + x*em[j].CPI;
 			Tfall_CPI_arr[x] = Trise_CPI_arr[x] + em[j].Burst_Len;
-		}
+		}*/
 		
 		double num_pdws;
 		num_pdws = floor((longest_len-em[j].offset)/em[j].PRI)+1;
