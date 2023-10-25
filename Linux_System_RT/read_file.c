@@ -157,7 +157,7 @@ void process_pdw_string(char *buff, struct emitter_s *em_arr, int *num_em, float
  
                 // Column 2
                 if (column%18 == 1) {
-                    em_arr[i].PRI = atoi(value);
+                    em_arr[i].PRI = atof(value);
                 }
  
                 // Column 3
@@ -167,7 +167,7 @@ void process_pdw_string(char *buff, struct emitter_s *em_arr, int *num_em, float
 		    	em_arr[i].SEGMENT_IDX = atoi(value);
 		    }
 		    else{
-		    	em_arr[i].PW = atoi(value);
+		    	em_arr[i].PW = atof(value);
 		     	em_arr[i].SEGMENT_IDX = 0; 	
 		    } 
                 }

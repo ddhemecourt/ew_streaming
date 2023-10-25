@@ -1,8 +1,8 @@
 
 struct emitter_s {
 	float offset; //offset in microseconds
-	unsigned long PW; //us
-	unsigned long PRI; //us	
+	double PW; //us
+	double PRI; //us	
 	int FREQ_OFFSET;
 	float REF_LEVEL_OFFSET;
 	float LEVEL_OFFSET;
