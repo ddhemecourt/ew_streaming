@@ -17,10 +17,14 @@
 //#include "time_mask.h"
 #include "read_file.h"
 #define PORT 49152
-#define num_bb 2
+#define num_bb 4
 #define SA struct sockaddr
 #define MAX 80
+#define pdw_port 49152
+#define ctrl_port 5025
 uint64_t TIME = 0;
+int control_socket_idx = num_bb;
+int GUI_socket_idx = num_bb+1;
 
 struct period_info {
         struct timespec next_period;
@@ -105,7 +109,7 @@ static void wait_rest_of_period(struct period_info *pinfo)
 
 void *simple_cyclic_task(int *sock)
 {
-	TIME = 1000000*get_time(sock[2])+1000;
+	TIME = 1000000*get_time(sock[control_socket_idx])+1000;
 	printf("TIME = %d\n", TIME);
 
 	struct period_info pinfo;
@@ -139,7 +143,7 @@ void *simple_cyclic_task(int *sock)
 	periodic_task_init(&pinfo);
 	while (1) {
 		bzero(buff, MAX);
-		z = recv(sock[3], buff, 10000,0);
+		z = recv(sock[GUI_socket_idx], buff, 10000,0);
 		if(z > 10){
 			for (int i = 0; i<num_bb; i++){	
 //				free(em_arr);
@@ -205,9 +209,21 @@ int main(int argc, char* argv[])
         int ret;
 
 	/*ESTABLISH CLIENT CONNECTIONS TO PDW STREAMING PORTS AND CONTROL PORT*/
-	int num_ports = 3;
-	const char *IP[] = {"192.168.58.21","192.168.58.22","192.168.58.11"};
-	const int *ports[] = {49152, 49152, 5025};
+	int num_ports = num_bb+1;
+	const char *IP[] = {"192.168.58.50","192.168.58.51","192.168.58.52","192.168.58.53","192.168.58.11"};
+	//const int *ports[] = {49152,49152,49152,49152,5025};
+	//const int *ports[] = {pdw_port, pdw_port, pdw_port, pdw_port, ctrl_port};
+	int *ports = malloc(sizeof(int)*(num_ports));
+	for(int u = 0; u<num_ports; u++){
+	
+		if(u == num_ports-1){
+			ports[u] = ctrl_port;
+		}
+		else{
+			ports[u] = pdw_port;
+		}
+
+	}
     	int *sock = malloc(sizeof(int)*4);
 	int client_fd;
 	struct sockaddr_in *serv_addr = malloc(sizeof(struct sockaddr_in)*num_ports);
@@ -277,15 +293,15 @@ int main(int argc, char* argv[])
     	len = sizeof(cli);
    
     	// Accept the data packet from client and verification
-    	sock[3] = accept(sockfd, (SA*)&cli, &len);
-    	if (sock[3] < 0) {
+    	sock[GUI_socket_idx] = accept(sockfd, (SA*)&cli, &len);
+    	if (sock[GUI_socket_idx] < 0) {
     	    printf("server accept failed...\n");
     	    exit(0);
     	}
     	else
     	    printf("server accept the client...\n");
 
-	fcntl(sock[3], F_SETFL, O_NONBLOCK);
+	fcntl(sock[GUI_socket_idx], F_SETFL, O_NONBLOCK);
 	/*ESTABLISH HIGH PRIORITY THREAD TO EXECUTE PROGRAM*/
 
         /* Lock memory */
