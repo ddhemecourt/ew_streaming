@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <unistd.h>
 #include <time.h>
 #include <fcntl.h>
@@ -17,7 +18,7 @@
 //#include "time_mask.h"
 #include "read_file.h"
 #define PORT 49152
-#define num_bb 4
+#define num_bb 1 
 #define SA struct sockaddr
 #define MAX 80
 #define pdw_port 49152
@@ -210,9 +211,8 @@ int main(int argc, char* argv[])
 
 	/*ESTABLISH CLIENT CONNECTIONS TO PDW STREAMING PORTS AND CONTROL PORT*/
 	int num_ports = num_bb+1;
-	const char *IP[] = {"192.168.58.50","192.168.58.51","192.168.58.52","192.168.58.53","192.168.58.11"};
-	//const int *ports[] = {49152,49152,49152,49152,5025};
-	//const int *ports[] = {pdw_port, pdw_port, pdw_port, pdw_port, ctrl_port};
+//	const char *IP[] = {"192.168.58.50","192.168.58.51","192.168.58.52","192.168.58.53","192.168.58.11"};
+	const char *IP[] = {"192.168.58.51","192.168.58.11"};
 	int *ports = malloc(sizeof(int)*(num_ports));
 	for(int u = 0; u<num_ports; u++){
 	
@@ -226,6 +226,7 @@ int main(int argc, char* argv[])
 	}
     	int *sock = malloc(sizeof(int)*4);
 	int client_fd;
+	int flag = 1;
 	struct sockaddr_in *serv_addr = malloc(sizeof(struct sockaddr_in)*num_ports);
 	for (int n = 0; n<num_ports; n++){
 		sock[n] = n;
@@ -243,6 +244,14 @@ int main(int argc, char* argv[])
     		        "\nInvalid address/ Address not supported \n");
     		    return;
     		}
+
+		if(setsockopt(sock[n],
+				IPPROTO_TCP,
+				TCP_NODELAY, 
+				(char *) &flag,
+				sizeof(int))==0){
+			printf("Issue setting socket option\n");
+		}
 
     		if ((client_fd
     		     = connect(sock[n], (struct sockaddr*)&serv_addr[n],

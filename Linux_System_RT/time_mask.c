@@ -135,6 +135,8 @@ struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_
 	free(pdws);
 	free(Trise_arr);
 	free(Tfall_arr);
+	free(Trise_CPI_arr); 
+	free(Tfall_CPI_arr); 
 	return pdw_out;
 }
 
