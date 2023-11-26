@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <fcntl.h>
+#include <string.h>
 
 #include "pdw_constructor.h"
 #include "tcdw_constructor.h"
@@ -23,6 +24,10 @@
 #define MAX 80
 #define pdw_port 49152
 #define ctrl_port 5025
+#define pdw_byte_len 32
+#define pdws_per_packet 10
+#define pdw_type 1 //basic is 1, expert is 0  TODO: probably change this naming convention
+
 uint64_t TIME = 0;
 int control_socket_idx = num_bb;
 int GUI_socket_idx = num_bb+1;
@@ -69,28 +74,18 @@ int get_time(int sock)
 static void send_pdw(int sock, char* pdw_word, unsigned long inc, int num_pdws)
 {
 	int i = 0;
+	int bytes = pdw_byte_len*pdws_per_packet;
 	while(1){
-		if(num_pdws-i >= 10){
-			//for(int j = 0; j<10; j++){
-			//	pdw_inc_toa(&pdw_word[48*(i+j)], inc);	
-			//}
-			send(sock, &pdw_word[48*i], 480, 0);
-		        i = i+10;	
+		if(num_pdws-i >= pdws_per_packet){
+			send(sock, &pdw_word[pdw_byte_len*i], bytes, 0);
+		        i = i+pdws_per_packet;	
 		}
-		else if (num_pdws-i < 10){
-			//for(int j = 0; j<(num_pdws-i); j++){
-			//	pdw_inc_toa(&pdw_word[48*(i+j)], inc);	
-			//}
-			send(sock, &pdw_word[48*i], (num_pdws-i)*48, 0);
+		else if (num_pdws-i < pdws_per_packet){
+			send(sock, &pdw_word[pdw_byte_len*i], (num_pdws-i)*pdw_byte_len, 0);
 		       	break;	
 		}
 	}
 }
-//static void send_pdw(int sock, char* pdw_word, unsigned long inc)
-//{
-////	pdw_inc_toa(pdw_word[48*i], inc);
-//        send(sock, pdw_word, 48, 0);
-//}
  
 static void send_tcdw(int sock, char* tcdw_word)
 {
@@ -179,9 +174,9 @@ void *simple_cyclic_task(int *sock)
 
 			//printf("T0 = %d\n", TIME);
 			pdws_out = emitter_to_pdws(em_arr, num_em,1000, &num_pdws_out, TIME, i);
-			pdw_words = malloc(sizeof(char *)*48*num_pdws_out);
+			pdw_words = malloc(sizeof(char *)*pdw_byte_len*num_pdws_out);
 			for(int j = 0; j<num_pdws_out; j++){
-				pdw_constructor(pdw_words,pdws_out[j],j*48);	
+				pdw_constructor(pdw_words,pdws_out[j],j*pdw_byte_len,pdw_type);	
 			}
 
 			send_pdw(sock[i],pdw_words,1000, num_pdws_out);
@@ -212,7 +207,7 @@ int main(int argc, char* argv[])
 	/*ESTABLISH CLIENT CONNECTIONS TO PDW STREAMING PORTS AND CONTROL PORT*/
 	int num_ports = num_bb+1;
 //	const char *IP[] = {"192.168.58.50","192.168.58.51","192.168.58.52","192.168.58.53","192.168.58.11"};
-	const char *IP[] = {"192.168.58.51","192.168.58.11"};
+	const char *IP[] = {"192.168.1.51","192.168.58.11"};
 	int *ports = malloc(sizeof(int)*(num_ports));
 	for(int u = 0; u<num_ports; u++){
 	

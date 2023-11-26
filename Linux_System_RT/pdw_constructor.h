@@ -31,7 +31,7 @@ struct pdw_s {
 
 //pdw_default = {0, 0, false, false, false, 0,0,0, false, 0, 20, 0, 0, 0, 0, 0, false, 0, 0};
 
-void* pdw_constructor(char* pdw_word, struct pdw_s pdw, int inc);
+void* pdw_constructor(char* pdw_word, struct pdw_s pdw, int inc, int pdw_type);
 
 
 void* pdw_inc_toa(char* pdw_word, unsigned long inc);
