@@ -24,6 +24,6 @@ struct emitter_ptr_s {
 
 void process_pdw_file(char *filename, struct emitter_s *em_arr, int *num_em);
 
-void process_pdw_string(char *buff, struct emitter_s *em_arr, int *num_em, float *phase_dir, float *amp_dir);
+void process_pdw_string(char *buff, struct emitter_s **em_arr, int *num_em, float *phase_dir, float *amp_dir);
 
 void process_input_file(char *filename, struct emitter_ptr_s *em_arr, int *num_em_ptrs);

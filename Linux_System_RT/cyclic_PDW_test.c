@@ -19,7 +19,8 @@
 //#include "time_mask.h"
 #include "read_file.h"
 #define PORT 49152
-#define num_bb 1 
+#define num_rf_ports 1
+#define num_bbs_per_port 4
 #define SA struct sockaddr
 #define MAX 80
 #define pdw_port 49152
@@ -29,8 +30,8 @@
 #define pdw_type 1 //basic is 1, expert is 0  TODO: probably change this naming convention
 
 uint64_t TIME = 0;
-int control_socket_idx = num_bb;
-int GUI_socket_idx = num_bb+1;
+int control_socket_idx = num_rf_ports*num_bbs_per_port;
+int GUI_socket_idx = num_rf_ports*num_bbs_per_port+1;
 
 struct period_info {
         struct timespec next_period;
@@ -118,13 +119,16 @@ void *simple_cyclic_task(int *sock)
 	int z;
 
 	double sec = 1000000;
-	int num_em;
-	bool retune_flag[num_bb];
-	int retune_time[num_bb];
+	int *num_em = malloc(sizeof(int)*num_bbs_per_port);
+	bool retune_flag[num_rf_ports];
+	int retune_time[num_rf_ports];
 	int num_pdws_out;
 	struct pdw_s *pdws_out;
 	char *pdw_words;
-	struct emitter_s *em_arr = malloc(sizeof(struct emitter_s)*100);
+	struct emitter_s **em_arr = (struct emitter_s **) malloc(sizeof(struct emitter_s)*num_bbs_per_port);
+	for(int v=0; v<num_bbs_per_port; v++){
+		em_arr[v] = (struct emitter_s *) malloc(sizeof(struct emitter_s)*100);
+	}
 	
 	float *phase_dir = malloc(sizeof(float)*360);
 	float *amp_dir = malloc(sizeof(float)*360);
@@ -138,18 +142,22 @@ void *simple_cyclic_task(int *sock)
 
 	periodic_task_init(&pinfo);
 	while (1) {
+		
+		//printf("NUM_EM 0: %d  arr: %lf\n",num_em[0], em_arr[0][0].PRI);
+		//printf("NUM_EM 1: %d  arr: %lf\n",num_em[0], em_arr[1][0].PRI);
+
 		bzero(buff, MAX);
 		z = recv(sock[GUI_socket_idx], buff, 10000,0);
 		if(z > 10){
-			for (int i = 0; i<num_bb; i++){	
+			for (int i = 0; i<num_rf_ports; i++){	
 //				free(em_arr);
 //				em_arr = malloc(sizeof(struct emitter_s)*100);				
-				process_pdw_string(buff, em_arr, &num_em, phase_dir, amp_dir);
+				process_pdw_string(buff, em_arr, num_em, phase_dir, amp_dir);
 			}
 			printf("From client: %s  %d\n", buff, z);
 		}
-
-		for(int i = 0; i<num_bb; i++){
+	for(int u = 0; u < num_bbs_per_port; u++){
+		for(int i = 0; i<num_rf_ports; i++){
 			if(retune_flag[i] == true){
 				retune_time[i]++;
 				if(retune_time[i] == 10){
@@ -158,39 +166,41 @@ void *simple_cyclic_task(int *sock)
 				}
 				continue;
 			}
-
 			if(i>0){
-				for(int x = 0; x<num_em; x++){
-					em_arr[x].PHASE_OFFSET = em_arr[x].REF_PHASE_OFFSET + phase_dir[em_arr[x].Direction];
-					em_arr[x].LEVEL_OFFSET = em_arr[x].REF_LEVEL_OFFSET + amp_dir[em_arr[x].Direction];
+				for(int x = 0; x<num_em[u]; x++){
+					em_arr[u][x].PHASE_OFFSET = em_arr[u][x].REF_PHASE_OFFSET + phase_dir[em_arr[u][x].Direction];
+					em_arr[u][x].LEVEL_OFFSET = em_arr[u][x].REF_LEVEL_OFFSET + amp_dir[em_arr[u][x].Direction];
 				}
 			}
 			else{
-				for(int x = 0; x<num_em; x++){
-					em_arr[x].PHASE_OFFSET = em_arr[x].REF_PHASE_OFFSET;
-					em_arr[x].LEVEL_OFFSET = em_arr[x].REF_LEVEL_OFFSET;
+				for(int x = 0; x<num_em[u]; x++){
+					em_arr[u][x].PHASE_OFFSET = em_arr[u][x].REF_PHASE_OFFSET;
+					em_arr[u][x].LEVEL_OFFSET = em_arr[u][x].REF_LEVEL_OFFSET;
 				}	
 			}
 
 			//printf("T0 = %d\n", TIME);
-			pdws_out = emitter_to_pdws(em_arr, num_em,1000, &num_pdws_out, TIME, i);
+			pdws_out = emitter_to_pdws(em_arr[u], num_em[u],1000, &num_pdws_out, TIME, i);
 			pdw_words = malloc(sizeof(char *)*pdw_byte_len*num_pdws_out);
 			for(int j = 0; j<num_pdws_out; j++){
 				pdw_constructor(pdw_words,pdws_out[j],j*pdw_byte_len,pdw_type);	
 			}
-
-			send_pdw(sock[i],pdw_words,1000, num_pdws_out);
-                	free(pdw_words);
+			//send_pdw(sock[(num_bbs_per_port-1)*u+(num_rf_ports-1)*i],pdw_words,1000, num_pdws_out);
+			send_pdw(sock[u],pdw_words,1000, num_pdws_out); //TODO: makes sure to fix this later. The indices aren't correct
+			free(pdw_words);
 			free(pdws_out);
-		}	
+		}
+	}	
 		if(sec/TIME == 1){
 			printf("TIME = %d  %ld \n", TIME, pdws_out[0].TOA);
+
 			sec = sec+1000000;
 		}	
 		TIME = TIME+1000;
 		wait_rest_of_period(&pinfo);
 
-        }
+        
+	}
 
         return NULL;
 }
@@ -205,13 +215,13 @@ int main(int argc, char* argv[])
         int ret;
 
 	/*ESTABLISH CLIENT CONNECTIONS TO PDW STREAMING PORTS AND CONTROL PORT*/
-	int num_ports = num_bb+1;
+	int num_ip_ports = num_rf_ports*num_bbs_per_port+1;
 //	const char *IP[] = {"192.168.58.50","192.168.58.51","192.168.58.52","192.168.58.53","192.168.58.11"};
-	const char *IP[] = {"192.168.1.51","192.168.58.11"};
-	int *ports = malloc(sizeof(int)*(num_ports));
-	for(int u = 0; u<num_ports; u++){
+	const char *IP[] = {"192.168.1.51","192.168.58.50","192.168.58.52","192.168.58.53","192.168.58.11"};
+	int *ports = malloc(sizeof(int)*(num_ip_ports));
+	for(int u = 0; u<num_ip_ports; u++){
 	
-		if(u == num_ports-1){
+		if(u == num_ip_ports-1){
 			ports[u] = ctrl_port;
 		}
 		else{
@@ -219,11 +229,11 @@ int main(int argc, char* argv[])
 		}
 
 	}
-    	int *sock = malloc(sizeof(int)*4);
+    	int *sock = malloc(sizeof(int)*(num_ip_ports+1));
 	int client_fd;
 	int flag = 1;
-	struct sockaddr_in *serv_addr = malloc(sizeof(struct sockaddr_in)*num_ports);
-	for (int n = 0; n<num_ports; n++){
+	struct sockaddr_in *serv_addr = malloc(sizeof(struct sockaddr_in)*num_ip_ports);
+	for (int n = 0; n<num_ip_ports; n++){
 		sock[n] = n;
     		if ((sock[n] = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     		    printf("\n Socket creation error \n");
@@ -275,8 +285,6 @@ int main(int argc, char* argv[])
     	// assign IP, PORT
     	servaddr.sin_family = AF_INET;
     	//servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    	servaddr.sin_addr.s_addr = inet_addr("192.168.58.8");
-    	//servaddr.sin_addr.s_addr = inet_addr("127.0.0.4");
     	servaddr.sin_port = htons(8080);
    
     	// Binding newly created socket to given IP and verification
@@ -413,3 +421,5 @@ out:
 }
 
 
+#include <limits.h>
+#include <pthread.h>
