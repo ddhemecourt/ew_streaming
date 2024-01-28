@@ -31,6 +31,8 @@
 uint64_t TIME = 0;
 int control_socket_idx = num_bb;
 int GUI_socket_idx = num_bb+1;
+int num_ports = num_bb+1;
+struct sockaddr_in *serv_addr;
 
 struct period_info {
         struct timespec next_period;
@@ -71,19 +73,25 @@ int get_time(int sock)
 
 
 
-static void send_pdw(int sock, char* pdw_word, unsigned long inc, int num_pdws)
+static void send_pdw(int sock, char* pdw_word, unsigned long inc, int num_pdws, int serv_addr_n)
 {
 	int i = 0;
 	int bytes = pdw_byte_len*pdws_per_packet;
 	while(1){
 		if(num_pdws-i >= pdws_per_packet){
 			send(sock, &pdw_word[pdw_byte_len*i], bytes, 0);
+			//sendto(sock, &pdw_word[pdw_byte_len*i], bytes,  0, (const struct sockaddr *) &serv_addr[serv_addr_n],sizeof(serv_addr[serv_addr_n]));
 		        i = i+pdws_per_packet;	
 		}
 		else if (num_pdws-i < pdws_per_packet){
 			send(sock, &pdw_word[pdw_byte_len*i], (num_pdws-i)*pdw_byte_len, 0);
+			//sendto(sock, &pdw_word[pdw_byte_len*i], bytes,  0, (const struct sockaddr *) &serv_addr[serv_addr_n],sizeof(serv_addr[serv_addr_n]));
 		       	break;	
 		}
+		/*if(num_pdws == 0){
+			char *nothing = "";
+			sendto(sock, (const char *)nothing, 0,  0, (const struct sockaddr *) &serv_addr[serv_addr_n],sizeof(serv_addr[serv_addr_n]));
+		}*/
 	}
 }
  
@@ -179,7 +187,7 @@ void *simple_cyclic_task(int *sock)
 				pdw_constructor(pdw_words,pdws_out[j],j*pdw_byte_len,pdw_type);	
 			}
 
-			send_pdw(sock[i],pdw_words,1000, num_pdws_out);
+			send_pdw(sock[i],pdw_words,1000, num_pdws_out,i);
                 	free(pdw_words);
 			free(pdws_out);
 		}	
@@ -205,9 +213,9 @@ int main(int argc, char* argv[])
         int ret;
 
 	/*ESTABLISH CLIENT CONNECTIONS TO PDW STREAMING PORTS AND CONTROL PORT*/
-	int num_ports = num_bb+1;
+//	int num_ports = num_bb+1;
 //	const char *IP[] = {"192.168.58.50","192.168.58.51","192.168.58.52","192.168.58.53","192.168.58.11"};
-	const char *IP[] = {"192.168.1.51","192.168.58.11"};
+	const char *IP[] = {"192.168.1.51","192.168.58.21"};
 	int *ports = malloc(sizeof(int)*(num_ports));
 	for(int u = 0; u<num_ports; u++){
 	
@@ -222,7 +230,25 @@ int main(int argc, char* argv[])
     	int *sock = malloc(sizeof(int)*4);
 	int client_fd;
 	int flag = 1;
-	struct sockaddr_in *serv_addr = malloc(sizeof(struct sockaddr_in)*num_ports);
+	serv_addr = malloc(sizeof(struct sockaddr_in)*num_ports);
+	/*for (int n = 0; n<num_ports-1; n++){
+		sock[n] = n;
+    		if ((sock[n] = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    		    printf("\n Socket creation error \n");
+    		    return;
+    		}
+
+    		serv_addr[n].sin_family = AF_INET;
+    		serv_addr[n].sin_port = htons(ports[n]);
+    	
+		if (inet_pton(AF_INET, IP[n], &serv_addr[n].sin_addr)
+    		    <= 0) {
+    		    printf(
+    		        "\nInvalid address/ Address not supported \n");
+    		    return;
+    		}
+
+	}*/
 	for (int n = 0; n<num_ports; n++){
 		sock[n] = n;
     		if ((sock[n] = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
