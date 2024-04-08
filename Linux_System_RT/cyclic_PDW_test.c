@@ -217,7 +217,7 @@ int main(int argc, char* argv[])
 	/*ESTABLISH CLIENT CONNECTIONS TO PDW STREAMING PORTS AND CONTROL PORT*/
 	int num_ip_ports = num_rf_ports*num_bbs_per_port+1;
 //	const char *IP[] = {"192.168.58.50","192.168.58.51","192.168.58.52","192.168.58.53","192.168.58.11"};
-	const char *IP[] = {"192.168.1.51","192.168.58.50","192.168.58.52","192.168.58.53","192.168.58.11"};
+	const char *IP[] = {"192.168.58.51","192.168.58.52","192.168.58.53","192.168.58.54","192.168.58.21"};
 	int *ports = malloc(sizeof(int)*(num_ip_ports));
 	for(int u = 0; u<num_ip_ports; u++){
 	
