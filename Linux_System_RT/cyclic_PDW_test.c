@@ -25,9 +25,9 @@
 #define MAX 80
 #define pdw_port 49152
 #define ctrl_port 5025
-#define pdw_byte_len 32
+#define pdw_byte_len 48
 #define pdws_per_packet 10
-#define pdw_type 1 //basic is 1, expert is 0  TODO: probably change this naming convention
+#define pdw_type 0 //basic is 1, expert is 0  TODO: probably change this naming convention
 
 uint64_t TIME = 0;
 int control_socket_idx = num_rf_ports*num_bbs_per_port;
