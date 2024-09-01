@@ -58,16 +58,18 @@ static void periodic_task_init(struct period_info *pinfo)
 }
 
 
-int get_time(int sock)
+uint64_t get_time(int sock)
 {	
 	int valread;
 	char buffer0[1024] = {0};
 	char *t_str = ":SOURce1:BB:ESEQuencer:RTCI:STR:STIM?\n";
+	double time_out;
 	send(sock, t_str, strlen(t_str),0);
     	printf("Time query message sent\n");
     	valread = read(sock, buffer0, 1024);
     	printf("sys t = %s\n", buffer0);
-	return atoi(buffer0);
+	time_out = 1000000*atof(buffer0);
+	return time_out;
 }
 
 
@@ -106,7 +108,8 @@ static void wait_rest_of_period(struct period_info *pinfo)
 
 void *simple_cyclic_task(int *sock)
 {
-	TIME = 1000000*get_time(sock[control_socket_idx])+1000;
+	//TIME = 1000000*get_time(sock[control_socket_idx])+1000;
+	TIME = get_time(sock[control_socket_idx])+10000;
 	printf("TIME = %d\n", TIME);
 
 	struct period_info pinfo;
