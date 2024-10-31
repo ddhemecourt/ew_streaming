@@ -2,7 +2,7 @@ function list_out = assign_bbs(SMWs,subnet)
 
     [num_SMWs,wid] = size(SMWs);
 
-    IPs = 200:1:250;
+    IPs = 50:1:100;
     total_bbs = 0;
     list_out = {};
     
