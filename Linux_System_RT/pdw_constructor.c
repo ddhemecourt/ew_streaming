@@ -86,7 +86,7 @@ void* pdw_constructor(char* pdw_word, struct pdw_s pdw,int inc){
 		pdw_word[17+inc]= (TON >> 16) & (0xFF);
 		pdw_word[18+inc]= (TON >> 8) & (0xFF);
 		pdw_word[19+inc]= (TON) & (0xFF);
-		freq_inc = (pdw.FREQ_INC)/(2.4e9)*pow(2,64);
+		freq_inc = (unsigned long)(pdw.FREQ_INC)/TON/(2.4e9)*pow(2,64);
 		pdw_word[20+inc]= (freq_inc >> 56) & (0xFF);
 		pdw_word[21+inc]= (freq_inc >> 48) & (0xFF);
 		pdw_word[22+inc]= (freq_inc >> 40) & (0xFF);

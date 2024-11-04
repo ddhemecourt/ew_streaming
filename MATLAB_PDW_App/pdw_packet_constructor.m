@@ -13,7 +13,7 @@ function streams = pdw_packet_constructor(dat,reps,added_t,BBs)
         end
         if(added_t > 0)
             for t = 2:M
-                dat{t,1} = dat{t,1} + added_t;
+                dat{t,1} = dat{t,1} + added_t + 1;
             end
         end
         for i = 2:M
