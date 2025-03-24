@@ -20,7 +20,7 @@
 #include "read_file.h"
 #define PORT 49152
 #define num_rf_ports 1
-#define num_bbs_per_port 4
+//#define num_bbs_per_port 2
 #define SA struct sockaddr
 #define MAX 80
 #define pdw_port 49152
@@ -30,9 +30,10 @@
 #define pdw_type 0 //basic is 1, expert is 0  TODO: probably change this naming convention
 
 uint64_t TIME = 0;
-int control_socket_idx = num_rf_ports*num_bbs_per_port;
-int GUI_socket_idx = num_rf_ports*num_bbs_per_port+1;
-
+int control_socket_idx;
+int GUI_socket_idx;
+int num_bbs_per_port;
+//int num_bbs_per_port;
 struct period_info {
         struct timespec next_period;
         long period_ns;
@@ -219,8 +220,25 @@ int main(int argc, char* argv[])
 
 	/*ESTABLISH CLIENT CONNECTIONS TO PDW STREAMING PORTS AND CONTROL PORT*/
 	int num_ip_ports = num_rf_ports*num_bbs_per_port+1;
+//	int num_ip_ports;
+//	num_bbs_per_port = num_ip_ports-1;
+	char **IP;
 //	const char *IP[] = {"192.168.58.50","192.168.58.51","192.168.58.52","192.168.58.53","192.168.58.11"};
-	const char *IP[] = {"192.168.58.51","192.168.58.52","192.168.58.53","192.168.58.54","192.168.58.22"};
+//	const char *IP[] = {"192.168.1.20","192.168.1.54"};
+	if(argc > 1){
+		printf("%d\n", argc-1);
+		num_ip_ports = argc-1; 
+		num_bbs_per_port = num_ip_ports-1;
+		control_socket_idx = num_rf_ports*num_bbs_per_port;
+		GUI_socket_idx = num_rf_ports*num_bbs_per_port+1;
+		IP = (char *)malloc(num_ip_ports * sizeof(char));
+		for(int i = 0; i < num_ip_ports; i++){
+			IP[i] = malloc(20*sizeof(char));
+			strcpy(IP[i], argv[i+1]);
+		}
+	}else{
+		return -1;
+	}
 	int *ports = malloc(sizeof(int)*(num_ip_ports));
 	for(int u = 0; u<num_ip_ports; u++){
 	
@@ -364,7 +382,7 @@ int main(int argc, char* argv[])
                 goto out;
         }
 
-
+/* THIS SECTION SEEMS TO REQUIRE ROOT PRIVELEGES
 	param.sched_priority = 99;
         ret = pthread_attr_setschedparam(&attr, &param);
         if (ret) {
@@ -380,7 +398,7 @@ int main(int argc, char* argv[])
                 goto out;
         }
 
-        /* Use scheduling parameters of attr */
+       //  Use scheduling parameters of attr 
         ret = pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
         if (ret) {
                 printf("pthread setinheritsched failed\n");
@@ -393,7 +411,7 @@ int main(int argc, char* argv[])
                 printf("pthread setinheritsched failed\n");
                 goto out;
         }
-
+*/
         /* Create a pthread with specified attributes */
         ret = pthread_create(&thread, &attr, simple_cyclic_task, sock);
         if (ret) {
