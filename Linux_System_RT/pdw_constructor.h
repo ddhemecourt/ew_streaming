@@ -25,7 +25,7 @@ struct pdw_s {
 	bool BURST;
 	unsigned int BURST_PRI;
 	uint16_t BURST_ADD_PULSES;
-	
+	bool IGNORE_PDW;	
 
 }; 
 

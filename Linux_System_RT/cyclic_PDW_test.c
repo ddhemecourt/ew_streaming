@@ -114,7 +114,7 @@ void *simple_cyclic_task(int *sock)
 	printf("TIME = %d\n", TIME);
 
 	struct period_info pinfo;
- 	
+ 	int extra_pdws;
 	int val = 0;
 
 	//Server buffer read vars
@@ -185,12 +185,26 @@ void *simple_cyclic_task(int *sock)
 
 			//printf("T0 = %d\n", TIME);
 			pdws_out = emitter_to_pdws(em_arr[u], num_em[u],1000, &num_pdws_out, TIME, i);
-			pdw_words = malloc(sizeof(char *)*pdw_byte_len*num_pdws_out);
+		
+			extra_pdws = 0;
+			if(num_pdws_out < 20 && num_pdws_out > 0){
+				extra_pdws = 20 - num_pdws_out;
+			}	
+
+			pdw_words = malloc(sizeof(char *)*pdw_byte_len*(num_pdws_out+extra_pdws));
+			//pdw_words = malloc(sizeof(char *)*pdw_byte_len*(num_pdws_out));
+			//printf("NUM PDWs Out: %d\n", num_pdws_out);
 			for(int j = 0; j<num_pdws_out; j++){
 				pdw_constructor(pdw_words,pdws_out[j],j*pdw_byte_len,pdw_type);	
 			}
+			if(num_pdws_out < 20 && num_pdws_out > 0){	
+			 pdws_out[num_pdws_out-1].IGNORE_PDW = 1;
+			 for(int j = num_pdws_out; j<num_pdws_out+extra_pdws; j++){
+		  		 pdw_constructor(pdw_words,pdws_out[num_pdws_out-1],j*pdw_byte_len,pdw_type);
+			 }
+			}
 			//send_pdw(sock[(num_bbs_per_port-1)*u+(num_rf_ports-1)*i],pdw_words,1000, num_pdws_out);
-			send_pdw(sock[u],pdw_words,1000, num_pdws_out); //TODO: makes sure to fix this later. The indices aren't correct
+			send_pdw(sock[u],pdw_words,1000, num_pdws_out+extra_pdws); //TODO: makes sure to fix this later. The indices aren't correct
 			free(pdw_words);
 			free(pdws_out);
 		}

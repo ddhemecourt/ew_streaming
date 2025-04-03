@@ -54,10 +54,10 @@ int time_mask(struct pdw_s pdw, uint64_t *Trise_arr, uint64_t *Tfall_arr, int le
 
 struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_len, int *num_pdws_out, uint64_t T0, int bb_num){
 	double longest_len = 0;
-	struct pdw_s **pdws = (struct pdw_s**)malloc(sizeof(struct pdw_s*) * num_emitters); 
-	int *Size = malloc(sizeof(int)*num_emitters);
-	int *CPI_Size = malloc(sizeof(int)*num_emitters);
-	struct pdw_s *pdws_out = malloc(sizeof(struct pdw_s)*2048);	
+	struct pdw_s **pdws = (struct pdw_s**)calloc(num_emitters, sizeof(struct pdw_s*)); 
+	int *Size = calloc(num_emitters, sizeof(int));
+	int *CPI_Size = calloc(num_emitters, sizeof(int));
+	struct pdw_s *pdws_out = calloc(2048, sizeof(struct pdw_s));	
 
 	//find longest PRI
 	//for(int j = 0; j<num_emitters; j++){
@@ -69,11 +69,11 @@ struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_
 	longest_len = us_len;
 
 	
-	uint64_t *Trise_CPI_arr = malloc(sizeof(uint64_t)*2048);
-	uint64_t *Tfall_CPI_arr = malloc(sizeof(uint64_t)*2048);
+	uint64_t *Trise_CPI_arr = calloc(2048, sizeof(uint64_t));
+	uint64_t *Tfall_CPI_arr = calloc(2048, sizeof(uint64_t));
 
-	uint64_t *Trise_arr = malloc(sizeof(uint64_t)*2048);
-	uint64_t *Tfall_arr = malloc(sizeof(uint64_t)*2048);
+	uint64_t *Trise_arr = calloc(2048, sizeof(uint64_t));
+	uint64_t *Tfall_arr = calloc(2048, sizeof(uint64_t));
 	int pulse_count = 0;
 	//Generate PDWs across longest PRI time per input emitter
 	for(int j = 0; j<num_emitters; j++){
@@ -89,19 +89,23 @@ struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_
 		double num_pdws;
 		num_pdws = floor((longest_len-em[j].offset)/em[j].PRI)+1;
 		if(floor((longest_len-em[j].offset)/em[j].PRI)==((longest_len-em[j].offset)/em[j].PRI)){num_pdws = num_pdws-1;}
-		pdws[j] = malloc(sizeof(struct pdw_s) * num_pdws);
+		pdws[j] = calloc(num_pdws, sizeof(struct pdw_s));
 		Size[j] = num_pdws;
+		//printf("SizeJ: %lf, Offset: %lf FloorLongLeng: %lf  LongLen: %d\n", num_pdws, em[j].offset, floor((longest_len-em[j].offset)/em[j].PRI), floor((longest_len-em[j].offset)/em[j].PRI)==(longest_len-em[j].offset)/em[j].PRI);
+		//printf("%lf\n", num_pdws);	
 		for(int i = 0; i<Size[j]; i++){
 			double TOA = T0 + (double)em[j].offset + i*em[j].PRI;
 			//printf("TOA: %d\n", TOA);
-			struct pdw_s pdw = {TOA, em[j].MOP, false, false, false, em[j].FREQ_OFFSET,em[j].LEVEL_OFFSET,em[j].PHASE_OFFSET, em[j].EDGE_TYPE, em[j].SEGMENT_IDX, em[j].PW, em[j].FREQ_INC, em[j].CHIP_WIDTH, em[j].CODE, em[j].RISE_TIME, em[j].FALL_TIME, false, 0, 0};
+			struct pdw_s pdw = {TOA, em[j].MOP, false, false, false, em[j].FREQ_OFFSET,em[j].LEVEL_OFFSET,em[j].PHASE_OFFSET, em[j].EDGE_TYPE, em[j].SEGMENT_IDX, em[j].PW, em[j].FREQ_INC, em[j].CHIP_WIDTH, em[j].CODE, em[j].RISE_TIME, em[j].FALL_TIME, false, 0, 0, 0};
 			pdws[j][i] = pdw;
 			Trise_arr[pulse_count] = pdw.TOA;
 			Tfall_arr[pulse_count] = pdw.TOA + pdw.TON;
 			pulse_count++;
 			if(i == Size[j]-1 && bb_num == 0){
 				//em[j].offset = (T0+longest_len-TOA) - em[j].PRI;
-				em[j].offset =  em[j].PRI-(T0+longest_len-TOA);
+			//	if(floor((longest_len-em[j].offset)/em[j].PRI)!=((longest_len-em[j].offset)/em[j].PRI)){
+					em[j].offset =  em[j].PRI-(T0+longest_len-TOA);
+			//	}
 			}
 		}
 	}
@@ -127,7 +131,7 @@ struct pdw_s *emitter_to_pdws(struct emitter_s *em, int num_emitters, double us_
 		Size[j] = new_size;
 		new_size = 0;
 	}
-	struct pdw_s *pdw_out = malloc(sizeof(struct pdw_s)*count);
+	struct pdw_s *pdw_out = calloc(count, sizeof(struct pdw_s));
 	pdw_sort(pdw_out,pdws_out,Size,num_emitters,count);
 	*num_pdws_out = count;
 	free(pdws_out);

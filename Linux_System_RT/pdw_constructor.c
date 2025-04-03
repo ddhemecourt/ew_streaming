@@ -39,7 +39,7 @@ void* pdw_constructor(char* pdw_word, struct pdw_s pdw,int inc, int pdw_type){
 		pdw_word[6+inc] = (TOA << 4)|(SEG << 3)|(true << 2)|(0x00);
 		
 		//flags
-		pdw_word[7+inc] = (0x00)|(pdw.M3 << 2)|(pdw.M2 << 1)|(pdw.M1);
+		pdw_word[7+inc] = (0x00)|(pdw.IGNORE_PDW << 4)|(pdw.M3 << 2)|(pdw.M2 << 1)|(pdw.M1);
 
 		//body
 		pdw_word[8+inc] =  (freq_offset >> 24) & (0xFF);
